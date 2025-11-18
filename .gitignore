@@ -111,6 +111,10 @@ frontend/wailsjs/
 *.icns
 *.iconset/
 
+# Build artifacts
+build/bin/
+build/darwin/
+
 # PDF exports (optional - remove if you want to track them)
 # *.pdf
 

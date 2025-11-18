@@ -21,10 +21,11 @@ import (
 
 // App struct
 type App struct {
-	ctx      context.Context
-	filePath string
-	markdown goldmark.Markdown
-	basePath string
+	ctx         context.Context
+	filePath    string
+	markdown    goldmark.Markdown
+	basePath    string
+	startupFile string // File to load on startup (from command line)
 }
 
 // NewApp creates a new App application struct
@@ -55,12 +56,42 @@ func NewApp() *App {
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
 func (a *App) OnStartup(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Panic in OnStartup: %v\n", r)
+		}
+	}()
+
 	a.ctx = ctx
 
-	// Load file if provided via command line
+	// Store file path from command line to load after DOM is ready
+	// Filter out Wails-specific arguments (flags starting with -)
+	// Also skip the executable name itself
 	if len(os.Args) > 1 {
-		if err := a.LoadFile(os.Args[1]); err == nil {
-			// File loaded successfully
+		for i := 1; i < len(os.Args); i++ {
+			arg := os.Args[i]
+			// Skip Wails flags and arguments
+			if strings.HasPrefix(arg, "-") {
+				continue
+			}
+			// Skip if it's the executable path
+			if arg == os.Args[0] {
+				continue
+			}
+			// This should be the file path
+			// Resolve to absolute path
+			if absPath, err := filepath.Abs(arg); err == nil {
+				// Check if it's actually a file
+				if info, err := os.Stat(absPath); err == nil && !info.IsDir() {
+					// Check if it's a markdown file
+					ext := strings.ToLower(filepath.Ext(absPath))
+					if ext == ".md" || ext == ".markdown" || ext == ".txt" {
+						a.startupFile = absPath
+						fmt.Printf("Startup file to load: %q\n", a.startupFile)
+						break
+					}
+				}
+			}
 		}
 	}
 }
@@ -239,6 +270,25 @@ func (a *App) OnDomReady(ctx context.Context) {
 			fmt.Printf("No data in file-dropped event\n")
 		}
 	})
+
+	// Load startup file if one was provided via command line
+	if a.startupFile != "" {
+		fmt.Printf("Loading startup file: %q\n", a.startupFile)
+		// Use a small delay to ensure frontend is fully ready
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			if err := a.LoadFile(a.startupFile); err != nil {
+				fmt.Printf("Error loading startup file: %v\n", err)
+				runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
+					Type:    runtime.ErrorDialog,
+					Title:   "Error Loading File",
+					Message: fmt.Sprintf("Failed to load file: %v", err),
+				})
+			} else {
+				fmt.Printf("Startup file loaded successfully: %s\n", a.startupFile)
+			}
+		}()
+	}
 }
 
 // ShowAbout shows the About dialog

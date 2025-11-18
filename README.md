@@ -12,7 +12,6 @@ A beautiful, native macOS application for viewing and exporting Markdown files. 
 - 🔄 **Auto-refresh** - Automatically reloads when files change
 - ⌨️ **Keyboard Shortcuts** - Full keyboard support for common operations
 
-## Screenshots
 
 ![UpDown Icon](UpDown.png)
 
