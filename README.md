@@ -1,200 +1,127 @@
 # UpDown - Markdown Viewer
 
-A full-featured native Markdown viewer built with Go and Wails. Supports standard Markdown conventions, Mermaid diagrams, and images. **All content is displayed directly inside the application window** - no external browser required. Cross-platform support for macOS, Windows, and Linux.
+A beautiful, native macOS application for viewing and exporting Markdown files. Built with [Wails](https://wails.io) and powered by [goldmark](https://github.com/yuin/goldmark).
 
 ## Features
 
-- ✅ **Standard Markdown Support**: Full support for CommonMark and GitHub Flavored Markdown (GFM)
-- ✅ **Mermaid Diagrams**: Render Mermaid diagrams directly in your Markdown files
-- ✅ **Image Support**: Display images referenced in Markdown files
-- ✅ **Native Desktop App**: Built with Go and Wails for a native cross-platform experience
-- ✅ **Embedded Display**: All content rendered inside the app window - no external browser needed
-- ✅ **Drag and Drop**: Simply drag a Markdown file into the window to open it
-- ✅ **Live Reload**: Automatically reloads content when the source file changes
+- 📝 **Rich Markdown Rendering** - View Markdown files with full formatting support
+- 🎨 **Mermaid Diagrams** - Render Mermaid flowcharts and diagrams
+- 🖼️ **Image Support** - Display images with automatic path resolution
+- 📄 **PDF Export** - Export your Markdown documents as PDF files
+- 🖱️ **Drag & Drop** - Simply drag and drop Markdown files to open them
+- 🔄 **Auto-refresh** - Automatically reloads when files change
+- ⌨️ **Keyboard Shortcuts** - Full keyboard support for common operations
 
-## Requirements
+## Screenshots
 
-- macOS, Windows, or Linux
-- Go 1.19 or later (for building from source)
-- Wails v2 (install with `go install github.com/wailsapp/wails/v2/cmd/wails@latest`)
+![UpDown Icon](UpDown.png)
 
 ## Installation
 
+### Prerequisites
+
+- Go 1.25 or later
+- [Wails v2](https://wails.io/docs/gettingstarted/installation)
+- macOS (for building the macOS app)
+
 ### Build from Source
 
-1. Clone or download this repository
-2. Install Wails CLI (if not already installed):
-   ```bash
-   go install github.com/wailsapp/wails/v2/cmd/wails@latest
-   ```
+1. Clone the repository:
+```bash
+git clone https://github.com/neshkoli/updown.git
+cd updown
+```
+
+2. Install dependencies:
+```bash
+go mod download
+```
+
 3. Build the application:
-   ```bash
-   ./build.sh
-   ```
-   This script will:
-   - Convert `UpDown.png` to the required `.icns` format
-   - Build the application with Wails
-   - Install the custom icon in the app bundle
-   
-   Alternatively, you can build manually:
-   ```bash
-   ./convert_icon.sh  # Convert PNG to .icns
-   wails build        # Build the app
-   ./fix_icon.sh      # Install the icon
-   ```
-   
-   This will create the app in `build/bin/updown.app` (macOS) or `build/bin/updown` (Linux/Windows)
+```bash
+./build.sh
+```
 
-4. Run the application:
-   - **macOS**: Open `build/bin/updown.app` or run `open build/bin/updown.app`
-   - **Linux/Windows**: Run `./build/bin/updown`
+Or use Wails directly:
+```bash
+wails build
+```
 
-### Development Mode
+The built application will be in `build/bin/updown.app`.
 
-For development with hot-reload:
+### Running in Development Mode
+
+To run with live reloading and debugging:
 ```bash
 wails dev
 ```
 
 ## Usage
 
-### Opening a File
+### Opening Files
 
-1. **From Command Line**: Pass the markdown file path as an argument:
-   ```bash
-   ./updown path/to/your/file.md
-   ```
+- **Menu**: File > Open... (⌘O)
+- **Drag & Drop**: Drag a Markdown file into the window
+- **Command Line**: `./updown.app/Contents/MacOS/updown path/to/file.md`
 
-2. **Drag and Drop**: 
-   - Launch the application
-   - Drag a Markdown file from Finder (or your file manager) and drop it into the application window
-   - The file will automatically open and display
+### Exporting to PDF
 
-3. **From the Menu**: 
-   - Launch the application
-   - Click **File > Open...** in the menu bar
-   - Select your Markdown file using the native file dialog
+- **Menu**: File > Export as PDF... (⌘E)
+- Select the destination and save
 
-### Viewing Content
+### Keyboard Shortcuts
 
-When you open a Markdown file:
-- The application starts an embedded web server
-- The content is displayed **directly in the application window**
-- The content includes full HTML rendering with:
-  - Styled text and headings
-  - Code blocks with syntax highlighting
-  - Tables
-  - Lists and blockquotes
-  - **Mermaid diagrams** (rendered client-side with JavaScript)
-  - **Images** (served from the markdown file's directory)
+- `⌘O` - Open file
+- `⌘E` - Export as PDF
+- `⌘Q` - Quit application
 
-### Reloading
+## Supported Markdown Features
 
-Click the "Reload" button in the toolbar to refresh the content if you've made changes to the Markdown file.
-
-## Markdown Features
-
-### Standard Markdown
-
-The viewer supports all standard Markdown syntax:
-- Headings (`#`, `##`, etc.)
+- Headers (H1-H6)
 - **Bold** and *italic* text
+- ~~Strikethrough~~
+- `Inline code` and code blocks
 - Lists (ordered and unordered)
-- Links and images
-- Code blocks and inline code
-- Blockquotes
 - Tables
+- Blockquotes
+- Links
+- Images (with relative path support)
+- Mermaid diagrams
 - Horizontal rules
 
-### Mermaid Diagrams
+## Project Structure
 
-Include Mermaid diagrams in your Markdown using code blocks:
-
-````markdown
-```mermaid
-graph TD
-    A[Start] --> B{Decision}
-    B -->|Yes| C[Action 1]
-    B -->|No| D[Action 2]
-    C --> E[End]
-    D --> E
 ```
-````
-
-The viewer will automatically render these diagrams using Mermaid.js **directly in the app window**.
-
-### Images
-
-Reference images in your Markdown files:
-
-```markdown
-![Alt text](path/to/image.png)
+updown/
+├── app.go              # Main application logic
+├── main.go             # Application entry point
+├── frontend/
+│   └── dist/
+│       └── index.html # Frontend UI
+├── build.sh           # Build script
+├── run.sh             # Run script
+├── wails.json         # Wails configuration
+└── README.md          # This file
 ```
 
-The viewer will:
-- Serve images from the same directory as your Markdown file
-- Support relative paths
-- Handle images in subdirectories
+## Credits
 
-**Note**: Images are served through the embedded web server, so they must be accessible from the Markdown file's directory.
+This project uses the following excellent libraries:
 
-## Architecture
-
-- **UI Framework**: [Lorca](https://github.com/zserge/lorca) - Lightweight webview library for Go
-- **Markdown Parser**: [Goldmark](https://github.com/yuin/goldmark) - Extensible Markdown parser
-- **Mermaid Support**: [goldmark-mermaid](https://github.com/abhinav/goldmark-mermaid) - Mermaid extension for Goldmark
-- **Rendering**: HTML rendering with embedded web server and webview for full JavaScript support
-
-## How It Works
-
-1. The application uses **Lorca** to create a native window with an embedded webview
-2. When you open a Markdown file:
-   - Goldmark parses the Markdown content
-   - The content is converted to HTML
-   - Image paths are processed to work with the web server
-   - An embedded HTTP server starts on a random port
-   - The webview navigates to the server URL
-   - **Content is displayed directly in the app window** (not in an external browser)
-   - Mermaid.js is loaded client-side to render diagrams
-
-## Key Differences from Previous Version
-
-- ✅ **No External Browser**: All content is displayed inside the application window
-- ✅ **Native Go Solution**: Uses lorca webview instead of Fyne
-- ✅ **Simpler Architecture**: Direct webview integration for HTML/JS rendering
-- ✅ **Better Integration**: Content feels more integrated with the app
-
-## Limitations
-
-- Requires Chrome/Chromium to be installed (lorca uses it for the webview)
-- The embedded web server runs only while the application is running
-- Images must be accessible from the Markdown file's directory
-- File selection uses native dialogs (osascript on macOS)
-
-## Development
-
-### Dependencies
-
-The project uses the following main dependencies:
-- `github.com/zserge/lorca` - Webview library
-- `github.com/yuin/goldmark` - Markdown parser
-- `go.abhg.dev/goldmark/mermaid` - Mermaid extension
-
-Install dependencies:
-```bash
-go mod download
-```
-
-### Building
-
-```bash
-go build -o updown
-```
+- **[goldmark](https://github.com/yuin/goldmark)** by [@yuin](https://github.com/yuin) - The powerful Markdown parser that does most of the heavy lifting for rendering Markdown content
+- **[Wails v2](https://wails.io)** - The framework for building native desktop applications
+- **[goldmark-mermaid](https://github.com/abhinav/goldmark-mermaid)** - Mermaid diagram support for goldmark
+- **[Mermaid.js](https://mermaid.js.org/)** - Diagram and flowchart rendering
+- **[html2pdf.js](https://github.com/eKoopmans/html2pdf.js)** - PDF generation from HTML
 
 ## License
 
-This project is provided as-is for use and modification.
+This project is open source. Please check the individual licenses of the dependencies listed above.
 
 ## Contributing
 
-Feel free to submit issues or pull requests to improve the viewer!
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Author
+
+[Noam Eshkoli](https://github.com/neshkoli)
