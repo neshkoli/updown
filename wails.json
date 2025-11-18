@@ -1,0 +1,35 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "updown",
+  "outputfilename": "updown",
+  "frontend": {
+    "dir": "./frontend/dist",
+    "install": "",
+    "build": "",
+    "bridge": "",
+    "serve": ""
+  },
+  "author": {
+    "name": "",
+    "email": ""
+  },
+  "info": {
+    "companyName": "",
+    "productName": "UpDown",
+    "productVersion": "1.0.0",
+    "copyright": "",
+    "comments": "A full-featured Markdown viewer with Mermaid diagram support"
+  },
+  "nsisType": "multiple",
+  "obfuscated": false,
+  "garbleargs": "",
+  "garble": false,
+  "compiler": "",
+  "devtools": false,
+  "upx": false,
+  "upxflags": "",
+  "compress": false,
+  "pack": true,
+  "icon": "./build/icon.icns"
+}
+
