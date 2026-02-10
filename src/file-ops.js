@@ -27,9 +27,12 @@ function updateTitle() {
   const modifier = dirty ? ' *' : '';
   const title = `${name}${modifier} — UpDown`;
   document.title = title;
-  // Update native Tauri window title
-  if (window.__TAURI__?.window?.getCurrentWindow) {
-    window.__TAURI__.window.getCurrentWindow().setTitle(title);
+  // Update native Tauri window title via IPC
+  if (window.__TAURI__?.core?.invoke) {
+    window.__TAURI__.core.invoke('plugin:window|set_title', {
+      label: 'main',
+      value: title,
+    }).catch(() => {});
   }
 }
 
@@ -88,6 +91,17 @@ export function fileNew(editor, refreshPreview) {
 }
 
 /**
+ * Show an error message to the user.
+ * @param {string} message
+ */
+function showError(message) {
+  console.error(message);
+  if (window.__TAURI__?.dialog?.message) {
+    window.__TAURI__.dialog.message(message, { title: 'UpDown — Error', kind: 'error' });
+  }
+}
+
+/**
  * Open a file by its absolute path. Shared by dialog-open and drag-drop.
  * @param {string} path
  * @param {HTMLTextAreaElement} editor
@@ -96,12 +110,16 @@ export function fileNew(editor, refreshPreview) {
 export async function fileOpenPath(path, editor, refreshPreview) {
   if (!window.__TAURI__) return;
 
-  const { readTextFile } = window.__TAURI__.fs;
-  const content = await readTextFile(path);
-  editor.value = content;
-  currentFilePath = path;
-  markClean(content);
-  refreshPreview();
+  try {
+    const { readTextFile } = window.__TAURI__.fs;
+    const content = await readTextFile(path);
+    editor.value = content;
+    currentFilePath = path;
+    markClean(content);
+    refreshPreview();
+  } catch (err) {
+    showError(`Failed to open file: ${err.message || err}`);
+  }
 }
 
 /**
@@ -112,21 +130,24 @@ export async function fileOpenPath(path, editor, refreshPreview) {
 export async function fileOpen(editor, refreshPreview) {
   if (!window.__TAURI__) return;
 
-  const { open } = window.__TAURI__.dialog;
+  try {
+    const { open } = window.__TAURI__.dialog;
 
-  const selected = await open({
-    title: 'Open Markdown',
-    filters: [
-      { name: 'Markdown', extensions: ['md', 'markdown'] },
-      { name: 'All files', extensions: ['*'] },
-    ],
-    multiple: false,
-  });
+    const selected = await open({
+      title: 'Open Markdown',
+      filters: [
+        { name: 'Markdown', extensions: ['md', 'markdown'] },
+        { name: 'All files', extensions: ['*'] },
+      ],
+      multiple: false,
+    });
 
-  if (!selected) return; // user cancelled
+    if (!selected) return; // user cancelled
 
-  const path = typeof selected === 'string' ? selected : selected;
-  await fileOpenPath(path, editor, refreshPreview);
+    await fileOpenPath(selected, editor, refreshPreview);
+  } catch (err) {
+    showError(`Failed to open file: ${err.message || err}`);
+  }
 }
 
 /**
@@ -136,9 +157,13 @@ export async function fileOpen(editor, refreshPreview) {
 export async function fileSave(editor) {
   if (currentFilePath) {
     if (!window.__TAURI__) return;
-    const { writeTextFile } = window.__TAURI__.fs;
-    await writeTextFile(currentFilePath, editor.value);
-    markClean(editor.value);
+    try {
+      const { writeTextFile } = window.__TAURI__.fs;
+      await writeTextFile(currentFilePath, editor.value);
+      markClean(editor.value);
+    } catch (err) {
+      showError(`Failed to save file: ${err.message || err}`);
+    }
   } else {
     await fileSaveAs(editor);
   }
@@ -151,21 +176,25 @@ export async function fileSave(editor) {
 export async function fileSaveAs(editor) {
   if (!window.__TAURI__) return;
 
-  const { save } = window.__TAURI__.dialog;
-  const { writeTextFile } = window.__TAURI__.fs;
+  try {
+    const { save } = window.__TAURI__.dialog;
+    const { writeTextFile } = window.__TAURI__.fs;
 
-  const path = await save({
-    title: 'Save Markdown',
-    filters: [
-      { name: 'Markdown', extensions: ['md', 'markdown'] },
-      { name: 'All files', extensions: ['*'] },
-    ],
-    defaultPath: currentFilePath || 'untitled.md',
-  });
+    const path = await save({
+      title: 'Save Markdown',
+      filters: [
+        { name: 'Markdown', extensions: ['md', 'markdown'] },
+        { name: 'All files', extensions: ['*'] },
+      ],
+      defaultPath: currentFilePath || 'untitled.md',
+    });
 
-  if (!path) return; // user cancelled
+    if (!path) return; // user cancelled
 
-  await writeTextFile(path, editor.value);
-  currentFilePath = path;
-  markClean(editor.value);
+    await writeTextFile(path, editor.value);
+    currentFilePath = path;
+    markClean(editor.value);
+  } catch (err) {
+    showError(`Failed to save file: ${err.message || err}`);
+  }
 }

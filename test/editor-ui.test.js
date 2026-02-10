@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { setViewMode, onFileAction, getViewMode, setFileActionHandlers, setViewActionHandlers, setupToolbar } from '../src/editor-ui.js';
+import { setViewMode, onAction, getViewMode, setFileActionHandlers, setViewActionHandlers, setupToolbar } from '../src/editor-ui.js';
 
-/** Build a minimal app DOM matching the new toolbar structure in index.html */
+/** Build a minimal app DOM matching the toolbar structure in index.html */
 function createAppDOM() {
   document.body.innerHTML = `
     <div id="app">
@@ -93,60 +93,62 @@ describe('editor-ui', () => {
     });
   });
 
-  describe('onFileAction', () => {
-    it('calls app.exit() when action is exit', () => {
-      const appShim = { app: { exit: vi.fn() } };
-      onFileAction(document, 'exit', appShim);
-      expect(appShim.app.exit).toHaveBeenCalledTimes(1);
-    });
-
-    it('does not call exit for other actions', () => {
-      const appShim = { app: { exit: vi.fn() } };
-      setFileActionHandlers({}); // clear handlers
-      onFileAction(document, 'new', appShim);
-      onFileAction(document, 'open', appShim);
-      onFileAction(document, 'save', appShim);
-      onFileAction(document, 'saveAs', appShim);
-      expect(appShim.app.exit).not.toHaveBeenCalled();
-    });
-
+  describe('onAction', () => {
     it('calls registered handler for new action', () => {
       const handler = vi.fn();
       setFileActionHandlers({ new: handler });
-      const appShim = { app: { exit: vi.fn() } };
-      onFileAction(document, 'new', appShim);
+      onAction('new');
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
     it('calls registered handler for open action', () => {
       const handler = vi.fn();
       setFileActionHandlers({ open: handler });
-      const appShim = { app: { exit: vi.fn() } };
-      onFileAction(document, 'open', appShim);
+      onAction('open');
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
     it('calls registered handler for save action', () => {
       const handler = vi.fn();
       setFileActionHandlers({ save: handler });
-      const appShim = { app: { exit: vi.fn() } };
-      onFileAction(document, 'save', appShim);
+      onAction('save');
       expect(handler).toHaveBeenCalledTimes(1);
     });
 
     it('calls registered handler for saveAs action', () => {
       const handler = vi.fn();
       setFileActionHandlers({ saveAs: handler });
-      const appShim = { app: { exit: vi.fn() } };
-      onFileAction(document, 'saveAs', appShim);
+      onAction('saveAs');
       expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls view action handler for toggleFolder', () => {
+      const toggle = vi.fn();
+      setViewActionHandlers({ toggleFolder: toggle });
+      onAction('toggleFolder');
+      expect(toggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('prefers view action handlers over file action handlers', () => {
+      const viewHandler = vi.fn();
+      const fileHandler = vi.fn();
+      setViewActionHandlers({ test: viewHandler });
+      setFileActionHandlers({ test: fileHandler });
+      onAction('test');
+      expect(viewHandler).toHaveBeenCalledTimes(1);
+      expect(fileHandler).not.toHaveBeenCalled();
+    });
+
+    it('does nothing for unknown actions', () => {
+      setFileActionHandlers({});
+      setViewActionHandlers({});
+      expect(() => onAction('unknown')).not.toThrow();
     });
   });
 
   describe('setupToolbar', () => {
     it('clicking a view-btn changes the view mode', () => {
-      const appShim = { app: { exit: vi.fn() } };
-      setupToolbar(document, appShim);
+      setupToolbar(document);
       const sourceBtn = document.querySelector('.view-btn[data-mode="source"]');
       sourceBtn.click();
       expect(getViewMode()).toBe('source');
@@ -156,8 +158,7 @@ describe('editor-ui', () => {
     it('clicking a file action button calls the registered handler', () => {
       const handler = vi.fn();
       setFileActionHandlers({ new: handler });
-      const appShim = { app: { exit: vi.fn() } };
-      setupToolbar(document, appShim);
+      setupToolbar(document);
       document.querySelector('[data-action="new"]').click();
       expect(handler).toHaveBeenCalledTimes(1);
     });
@@ -165,8 +166,7 @@ describe('editor-ui', () => {
     it('clicking toggleFolder calls view action handler', () => {
       const toggle = vi.fn();
       setViewActionHandlers({ toggleFolder: toggle });
-      const appShim = { app: { exit: vi.fn() } };
-      setupToolbar(document, appShim);
+      setupToolbar(document);
       document.querySelector('[data-action="toggleFolder"]').click();
       expect(toggle).toHaveBeenCalledTimes(1);
     });

@@ -42,21 +42,15 @@ export function setMdCommandHandler(handler) {
 }
 
 /**
- * Execute a file action by name (new, open, save, saveAs, exit).
+ * Execute a registered action by name.
+ * Checks view action handlers first, then file action handlers.
+ * @param {string} action - action identifier (e.g. 'new', 'open', 'save', 'saveAs', 'toggleFolder')
  */
-export function onFileAction(doc, action, neutralino) {
-  switch (action) {
-    case 'new':
-    case 'open':
-    case 'save':
-    case 'saveAs':
-      if (fileActionHandlers[action]) fileActionHandlers[action]();
-      break;
-    case 'exit':
-      neutralino.app.exit();
-      break;
-    default:
-      break;
+export function onAction(action) {
+  if (viewActionHandlers[action]) {
+    viewActionHandlers[action]();
+  } else if (fileActionHandlers[action]) {
+    fileActionHandlers[action]();
   }
 }
 
@@ -82,7 +76,7 @@ export function setViewMode(doc, mode) {
 /**
  * Set up all toolbar button event listeners.
  */
-export function setupToolbar(doc, neutralino) {
+export function setupToolbar(doc) {
   doc.querySelectorAll('.toolbar-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const action = btn.dataset.action;
@@ -96,13 +90,7 @@ export function setupToolbar(doc, neutralino) {
         // Markdown formatting command
         if (mdCommandHandler) mdCommandHandler(md);
       } else if (action) {
-        // Check custom view action handlers first (e.g. toggleFolder)
-        if (viewActionHandlers[action]) {
-          viewActionHandlers[action]();
-        } else {
-          // File action
-          onFileAction(doc, action, neutralino);
-        }
+        onAction(action);
       }
     });
   });

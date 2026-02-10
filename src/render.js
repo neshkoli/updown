@@ -4,7 +4,6 @@
  */
 import { applyBidi } from './bidi.js';
 import { debounce } from './utils.js';
-export { debounce };
 
 // Initialize markdown-it with sensible defaults
 const md = window.markdownit({
@@ -86,7 +85,7 @@ export function setupLivePreview(editor, preview, delayMs = 150) {
 
     preview.addEventListener('mouseout', (e) => {
       const link = e.target.closest('a');
-      if (link) {
+      if (link && !link.contains(e.relatedTarget)) {
         linkStatus.textContent = '';
         linkStatus.classList.remove('visible');
       }

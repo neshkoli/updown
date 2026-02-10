@@ -11,14 +11,12 @@ let currentFolder = null;
 let onFileSelect = null; // callback: (filePath) => void
 
 /**
- * Get the last used folder from localStorage, default to $HOME.
+ * Get the last used folder from localStorage, default to root.
+ * The Tauri home-dir API in setupFolderPanel provides the real fallback.
  * @returns {string}
  */
 function getInitialFolder() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) return saved;
-  // Fallback: try common home paths
-  return '/Users/' + (typeof process !== 'undefined' ? process.env?.USER : '') || '/';
+  return localStorage.getItem(STORAGE_KEY) || '/';
 }
 
 /**

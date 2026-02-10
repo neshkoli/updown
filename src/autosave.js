@@ -13,7 +13,7 @@ import { debounce } from './utils.js';
 export function setupAutosave(editor, delayMs = 1500) {
   const debouncedSave = debounce(() => {
     if (getCurrentFilePath()) {
-      fileSave(editor);
+      fileSave(editor).catch(err => console.error('Autosave failed:', err));
     }
   }, delayMs);
 

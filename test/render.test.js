@@ -6,8 +6,9 @@ import markdownit from 'markdown-it';
 globalThis.window = globalThis.window || globalThis;
 globalThis.window.markdownit = markdownit;
 
-// Now import our module (it reads window.markdownit at import time).
-const { renderMarkdown, debounce, setupLivePreview } = await import('../src/render.js');
+// Now import our modules (render.js reads window.markdownit at import time).
+const { renderMarkdown, setupLivePreview } = await import('../src/render.js');
+const { debounce } = await import('../src/utils.js');
 
 describe('renderMarkdown', () => {
   it('renders a heading with id', () => {
