@@ -264,3 +264,34 @@ html, body {
   padding: 0.6rem 1.4rem;
   border-radius: 6px;
 }
+
+/* Link status bar (browser-style URL preview) */
+.link-status {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  max-width: 60%;
+  padding: 3px 10px;
+  background: #f0f0f0;
+  border-top: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-top-right-radius: 4px;
+  font-size: 0.75rem;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 900;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.link-status.visible {
+  opacity: 1;
+}
+
+/* Links in preview get a pointer cursor */
+.preview a {
+  cursor: pointer;
+}

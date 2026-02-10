@@ -10,9 +10,9 @@ globalThis.window.markdownit = markdownit;
 const { renderMarkdown, debounce, setupLivePreview } = await import('../src/render.js');
 
 describe('renderMarkdown', () => {
-  it('renders a heading', () => {
+  it('renders a heading with id', () => {
     const html = renderMarkdown('# Hello');
-    expect(html).toContain('<h1>Hello</h1>');
+    expect(html).toContain('<h1 id="hello">Hello</h1>');
   });
 
   it('renders a paragraph', () => {

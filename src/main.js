@@ -41,8 +41,14 @@ window.addEventListener('DOMContentLoaded', () => {
       await fileOpen(editor, refreshPreview);
       syncToFile(getCurrentFilePath());
     },
-    save: () => fileSave(editor),
-    saveAs: () => fileSaveAs(editor),
+    save: async () => {
+      await fileSave(editor);
+      syncToFile(getCurrentFilePath());
+    },
+    saveAs: async () => {
+      await fileSaveAs(editor);
+      syncToFile(getCurrentFilePath());
+    },
   });
 
   // Wire view menu custom actions
@@ -68,4 +74,28 @@ window.addEventListener('DOMContentLoaded', () => {
 
   setupFolderPanel(openFromPanel);
   setupPanelResize();
+
+  // Handle native menu actions
+  window.__menuAction = (action) => {
+    switch (action) {
+      case 'open':
+        fileOpen(editor, refreshPreview).then(() => syncToFile(getCurrentFilePath()));
+        break;
+      case 'saveAs':
+        fileSaveAs(editor).then(() => syncToFile(getCurrentFilePath()));
+        break;
+      case 'toggleFolder':
+        toggleFolderPanel();
+        break;
+      case 'viewSource':
+        setViewMode(document, 'source');
+        break;
+      case 'viewPreview':
+        setViewMode(document, 'preview');
+        break;
+      case 'viewSplit':
+        setViewMode(document, 'split');
+        break;
+    }
+  };
 });
