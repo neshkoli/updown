@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:ql": "./scripts/build-qlgenerator.sh"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",

@@ -42,6 +42,7 @@ window.addEventListener('DOMContentLoaded', () => {
     viewSource: () => setViewMode(document, 'source'),
     viewPreview: () => setViewMode(document, 'preview'),
     viewSplit: () => setViewMode(document, 'split'),
+    installQuickLook: installQuickLookPlugin,
   });
 
   // Wire markdown formatting commands
@@ -88,5 +89,50 @@ window.addEventListener('DOMContentLoaded', () => {
         window.__openFile(filePath);
       }
     }).catch(() => {});
+
+    // First-run: offer to install the Quick Look plugin for Markdown
+    offerQuickLookInstall();
   }
 });
+
+/**
+ * Install the Quick Look plugin for Markdown preview in Finder (Space key).
+ * Called from the menu action or the first-run prompt.
+ */
+async function installQuickLookPlugin() {
+  if (!window.__TAURI__) return;
+  try {
+    const result = await window.__TAURI__.core.invoke('install_quicklook_plugin');
+    await window.__TAURI__.dialog.message(result, { title: 'Quick Look', kind: 'info' });
+  } catch (err) {
+    await window.__TAURI__.dialog.message(
+      'Failed to install Quick Look plugin:\n' + err,
+      { title: 'Quick Look', kind: 'error' }
+    );
+  }
+}
+
+/**
+ * On first run, offer to install the Quick Look plugin.
+ * Uses localStorage to remember that the offer was made.
+ */
+async function offerQuickLookInstall() {
+  if (!window.__TAURI__) return;
+  if (localStorage.getItem('ql_plugin_offered')) return;
+
+  // Mark as offered so we only ask once
+  localStorage.setItem('ql_plugin_offered', '1');
+
+  try {
+    const yes = await window.__TAURI__.dialog.confirm(
+      'Would you like to install the Quick Look plugin?\n\n' +
+      'This lets you preview Markdown files by pressing Space in Finder.',
+      { title: 'Quick Look for Markdown', kind: 'info', okLabel: 'Install', cancelLabel: 'Not Now' }
+    );
+    if (yes) {
+      await installQuickLookPlugin();
+    }
+  } catch {
+    // Dialog was cancelled or errored — that's fine
+  }
+}

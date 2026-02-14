@@ -1,0 +1,153 @@
+/* Markdown preview styles for Quick Look — adapted from src/css/markdown.css */
+/* Selectors changed from #preview to body for standalone HTML rendering */
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: #222;
+  line-height: 1.6;
+  padding: 1em 1.5em;
+  margin: 0;
+  max-width: 900px;
+}
+
+/* Headings */
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6 {
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+body h1 { font-size: 1.8em; border-bottom: 1px solid #ddd; padding-bottom: 0.3em; }
+body h2 { font-size: 1.5em; border-bottom: 1px solid #eee; padding-bottom: 0.25em; }
+body h3 { font-size: 1.25em; }
+body h4 { font-size: 1.1em; }
+body h5 { font-size: 1em; }
+body h6 { font-size: 0.9em; color: #666; }
+
+/* Paragraphs */
+body p {
+  margin: 0.6em 0;
+}
+
+/* Links */
+body a {
+  color: #0969da;
+  text-decoration: none;
+}
+
+body a:hover {
+  text-decoration: underline;
+}
+
+/* Lists */
+body ul,
+body ol {
+  margin: 0.5em 0;
+  padding-left: 1.8em;
+  padding-right: 0;
+}
+
+/* RTL lists: flip padding so markers stay visible on the right */
+body ul[dir="rtl"],
+body ol[dir="rtl"] {
+  padding-left: 0;
+  padding-right: 1.8em;
+}
+
+body li {
+  margin: 0.25em 0;
+}
+
+body li > p {
+  margin: 0.25em 0;
+}
+
+/* Blockquote */
+body blockquote {
+  margin: 0.5em 0;
+  padding: 0.4em 1em;
+  border-left: 4px solid #d0d7de;
+  background: #f6f8fa;
+  color: #555;
+}
+
+body blockquote > p {
+  margin: 0.3em 0;
+}
+
+/* Code — inline */
+body code {
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  background: #f0f0f0;
+  font-family: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+  font-size: 0.88em;
+}
+
+/* Code — fenced block */
+body pre {
+  margin: 0.6em 0;
+  padding: 0.75em 1em;
+  border-radius: 6px;
+  background: #f6f8fa;
+  overflow-x: auto;
+}
+
+body pre code {
+  padding: 0;
+  background: transparent;
+  font-size: 0.88em;
+  line-height: 1.5;
+}
+
+/* Horizontal rule */
+body hr {
+  margin: 1.2em 0;
+  border: none;
+  border-top: 1px solid #d0d7de;
+}
+
+/* Tables */
+body table {
+  margin: 0.6em 0;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+body th,
+body td {
+  padding: 0.4em 0.75em;
+  border: 1px solid #d0d7de;
+  text-align: left;
+}
+
+body th {
+  background: #f6f8fa;
+  font-weight: 600;
+}
+
+body tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+/* Images */
+body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Strong / em */
+body strong {
+  font-weight: 600;
+}
+
+body em {
+  font-style: italic;
+}

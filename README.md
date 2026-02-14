@@ -15,6 +15,7 @@ A lightweight, cross-platform Markdown viewer and editor built with [Tauri 2](ht
 - **Drag and drop** — Drop `.md` files onto the window to open them
 - **Autosave** — Automatically saves changes after a short idle period (when a file is open)
 - **Dirty indicator** — Window title shows `*` when there are unsaved changes
+- **Quick Look** — Press Space on any `.md` file in Finder to see a formatted preview (macOS; installs via menu or first-run prompt)
 
 ## Tech Stack
 
@@ -48,9 +49,27 @@ npm test
 npx tauri build
 ```
 
+To include the Quick Look plugin in the macOS build (requires Xcode):
+
+```bash
+# Build the Quick Look generator (copies to src-tauri/resources/)
+npm run build:ql
+
+# Then build the app as usual
+npx tauri build
+```
+
 The production build outputs:
 - **macOS**: `src-tauri/target/release/bundle/macos/UpDown.app`
 - **DMG**: `src-tauri/target/release/bundle/dmg/UpDown_2.0.0_aarch64.dmg`
+
+## Quick Look (macOS)
+
+UpDown includes a Quick Look generator that lets you preview Markdown files by pressing **Space** in Finder — no need to open the full app.
+
+- **Install**: On first launch, UpDown offers to install the Quick Look plugin. You can also install it later from **File > Install Quick Look Plugin…**
+- **How it works**: The plugin is installed to `~/Library/QuickLook/` and uses the same markdown-it renderer (via JavaScriptCore) and CSS styles as the in-app preview, including RTL/bidi support.
+- **Uninstall**: Delete `~/Library/QuickLook/UpDownMarkdown.qlgenerator` and run `qlmanage -r` in Terminal.
 
 ## Project Structure
 
@@ -76,12 +95,26 @@ updown/
 ├── src-tauri/              # Tauri / Rust backend
 │   ├── src/
 │   │   ├── main.rs
-│   │   └── lib.rs          # Plugin initialization
+│   │   └── lib.rs          # Plugin init, menu, Quick Look install command
 │   ├── capabilities/
 │   │   └── default.json    # Permissions (fs, dialog, process)
+│   ├── resources/          # Built Quick Look plugin (bundled into app)
 │   ├── tauri.conf.json     # App config (window, bundle, etc.)
 │   ├── Cargo.toml
 │   └── icons/              # App icons for all platforms
+├── qlgenerator/            # macOS Quick Look generator (Xcode project)
+│   ├── UpDownMarkdown.xcodeproj
+│   └── UpDownMarkdown/
+│       ├── main.c          # CFPlugin boilerplate
+│       ├── GeneratePreviewForURL.m  # Preview via JSC + markdown-it
+│       ├── GenerateThumbnailForURL.m
+│       ├── Info.plist
+│       └── Resources/
+│           ├── markdown-it.min.js
+│           ├── bidi.js     # RTL/bidi for HTML strings
+│           └── preview.css # Markdown styles (adapted from app)
+├── scripts/
+│   └── build-qlgenerator.sh  # Build & copy QL plugin
 ├── test/                   # Vitest unit tests
 │   ├── editor-ui.test.js
 │   ├── md-commands.test.js

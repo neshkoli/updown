@@ -1,0 +1,373 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		B1000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000001 /* AppDelegate.swift */; };
+		B1000010 /* PreviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000010 /* PreviewViewController.swift */; };
+		B1000011 /* markdown-it.min.js in Resources */ = {isa = PBXBuildFile; fileRef = B2000011 /* markdown-it.min.js */; };
+		B1000012 /* bidi.js in Resources */ = {isa = PBXBuildFile; fileRef = B2000012 /* bidi.js */; };
+		B1000013 /* preview.css in Resources */ = {isa = PBXBuildFile; fileRef = B2000013 /* preview.css */; };
+		B1000020 /* UpDownPreview.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B3000002 /* UpDownPreview.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B1100001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B8000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B6000002;
+			remoteInfo = UpDownPreview;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B4100001 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B1000020 /* UpDownPreview.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		B2000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		B2000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B2000010 /* PreviewViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewViewController.swift; sourceTree = "<group>"; };
+		B2000011 /* markdown-it.min.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "markdown-it.min.js"; sourceTree = "<group>"; };
+		B2000012 /* bidi.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = bidi.js; sourceTree = "<group>"; };
+		B2000013 /* preview.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = preview.css; sourceTree = "<group>"; };
+		B2000014 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B2000015 /* UpDownQuickLook.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UpDownQuickLook.entitlements; sourceTree = "<group>"; };
+		B2000016 /* UpDownPreview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UpDownPreview.entitlements; sourceTree = "<group>"; };
+		B3000001 /* UpDownQuickLook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UpDownQuickLook.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B3000002 /* UpDownPreview.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = UpDownPreview.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B4000001 /* Frameworks (Host) */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4000002 /* Frameworks (Extension) */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		B5000001 /* Root */ = {
+			isa = PBXGroup;
+			children = (
+				B5000002 /* HostApp */,
+				B5000003 /* PreviewExtension */,
+				B5000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B5000002 /* HostApp */ = {
+			isa = PBXGroup;
+			children = (
+				B2000001 /* AppDelegate.swift */,
+				B2000002 /* Info.plist */,
+				B2000015 /* UpDownQuickLook.entitlements */,
+			);
+			path = HostApp;
+			sourceTree = "<group>";
+		};
+		B5000003 /* PreviewExtension */ = {
+			isa = PBXGroup;
+			children = (
+				B2000010 /* PreviewViewController.swift */,
+				B2000014 /* Info.plist */,
+				B2000016 /* UpDownPreview.entitlements */,
+				B5000005 /* Resources */,
+			);
+			path = PreviewExtension;
+			sourceTree = "<group>";
+		};
+		B5000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B3000001 /* UpDownQuickLook.app */,
+				B3000002 /* UpDownPreview.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B5000005 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B2000011 /* markdown-it.min.js */,
+				B2000012 /* bidi.js */,
+				B2000013 /* preview.css */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B6000001 /* UpDownQuickLook */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B7000003 /* Build configuration list for PBXNativeTarget "UpDownQuickLook" */;
+			buildPhases = (
+				B4000003 /* Sources (Host) */,
+				B4000001 /* Frameworks (Host) */,
+				B4100001 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B1100002 /* PBXTargetDependency */,
+			);
+			name = UpDownQuickLook;
+			productName = UpDownQuickLook;
+			productReference = B3000001 /* UpDownQuickLook.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B6000002 /* UpDownPreview */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B7000005 /* Build configuration list for PBXNativeTarget "UpDownPreview" */;
+			buildPhases = (
+				B4000004 /* Sources (Extension) */,
+				B4000002 /* Frameworks (Extension) */,
+				B4000005 /* Resources (Extension) */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = UpDownPreview;
+			productName = UpDownPreview;
+			productReference = B3000002 /* UpDownPreview.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B8000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = B7000001 /* Build configuration list for PBXProject */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = B5000001 /* Root */;
+			productRefGroup = B5000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B6000001 /* UpDownQuickLook */,
+				B6000002 /* UpDownPreview */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B4000005 /* Resources (Extension) */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1000011 /* markdown-it.min.js in Resources */,
+				B1000012 /* bidi.js in Resources */,
+				B1000013 /* preview.css in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B4000003 /* Sources (Host) */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1000001 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4000004 /* Sources (Extension) */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1000010 /* PreviewViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B1100002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B6000002 /* UpDownPreview */;
+			targetProxy = B1100001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		B9000001 /* Debug (Project) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B9000002 /* Release (Project) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		B9000003 /* Debug (Host) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_ENTITLEMENTS = HostApp/UpDownQuickLook.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = HostApp/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.noam.updown.quicklook;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		B9000004 /* Release (Host) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_ENTITLEMENTS = HostApp/UpDownQuickLook.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = HostApp/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.noam.updown.quicklook;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		B9000005 /* Debug (Extension) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = PreviewExtension/UpDownPreview.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = PreviewExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.noam.updown.quicklook.preview;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		B9000006 /* Release (Extension) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = PreviewExtension/UpDownPreview.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = PreviewExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.noam.updown.quicklook.preview;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B7000001 /* Build configuration list for PBXProject */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B9000001 /* Debug (Project) */,
+				B9000002 /* Release (Project) */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B7000003 /* Build configuration list for PBXNativeTarget "UpDownQuickLook" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B9000003 /* Debug (Host) */,
+				B9000004 /* Release (Host) */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B7000005 /* Build configuration list for PBXNativeTarget "UpDownPreview" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B9000005 /* Debug (Extension) */,
+				B9000006 /* Release (Extension) */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = B8000001 /* Project object */;
+}
