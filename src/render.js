@@ -5,6 +5,15 @@
 import { applyBidi } from './bidi.js';
 import { debounce } from './utils.js';
 
+/** Escape HTML special characters for safe insertion. */
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // Initialize markdown-it with sensible defaults
 const md = window.markdownit({
   html: false,        // don't allow raw HTML in source
@@ -44,6 +53,66 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
 };
 
 /**
+ * Extract YAML frontmatter from markdown source.
+ * Returns { metadata: [{key, value}] | null, body: string }.
+ * Frontmatter must start on the first line with "---" and end with "---".
+ * @param {string} source
+ * @returns {{ metadata: Array<{key: string, value: string}> | null, body: string }}
+ */
+export function extractFrontmatter(source) {
+  if (!source) return { metadata: null, body: source || '' };
+
+  const lines = source.split('\n');
+  if (lines.length < 3 || lines[0].trim() !== '---') {
+    return { metadata: null, body: source };
+  }
+
+  // Find closing ---
+  let closingIndex = -1;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === '---') {
+      closingIndex = i;
+      break;
+    }
+  }
+
+  if (closingIndex < 2) return { metadata: null, body: source };
+
+  const yamlLines = lines.slice(1, closingIndex);
+  const body = lines.slice(closingIndex + 1).join('\n');
+
+  // Parse simple YAML key: value pairs
+  const metadata = [];
+  for (const line of yamlLines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const colonIdx = trimmed.indexOf(':');
+    if (colonIdx > 0) {
+      const key = trimmed.slice(0, colonIdx).trim();
+      let value = trimmed.slice(colonIdx + 1).trim();
+
+      // Strip surrounding quotes
+      if ((value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))) {
+        value = value.slice(1, -1);
+      }
+
+      if (key) {
+        metadata.push({ key, value });
+      }
+    } else if (trimmed.startsWith('- ') && metadata.length > 0) {
+      // List item — append to last key's value
+      const item = trimmed.slice(2);
+      const last = metadata[metadata.length - 1];
+      last.value = last.value ? last.value + ', ' + item : item;
+    }
+  }
+
+  return { metadata: metadata.length > 0 ? metadata : null, body };
+}
+
+/**
  * Render markdown source text to HTML string.
  * @param {string} source
  * @returns {string}
@@ -61,9 +130,29 @@ export function renderMarkdown(source) {
  * @returns {() => void} immediate refresh function
  */
 export function setupLivePreview(editor, preview, delayMs = 150) {
+  const metadataPanel = document.getElementById('metadata-panel');
+  const metadataContent = document.getElementById('metadata-content');
+
   function update() {
-    preview.innerHTML = renderMarkdown(editor.value);
+    const { metadata, body } = extractFrontmatter(editor.value);
+
+    // Render body (without frontmatter) into preview
+    preview.innerHTML = renderMarkdown(body);
     applyBidi(preview);
+
+    // Update metadata panel
+    if (metadata && metadataPanel && metadataContent) {
+      metadataPanel.classList.remove('hidden');
+      const rows = metadata.map(({ key, value }) => {
+        const safeKey = escapeHtml(key);
+        const safeValue = value ? escapeHtml(value) : '<span style="color:#8b949e">(empty)</span>';
+        return `<tr><td class="meta-key">${safeKey}</td><td class="meta-value">${safeValue}</td></tr>`;
+      }).join('');
+      metadataContent.innerHTML = `<table>${rows}</table>`;
+    } else if (metadataPanel) {
+      metadataPanel.classList.add('hidden');
+      if (metadataContent) metadataContent.innerHTML = '';
+    }
   }
 
   const debouncedUpdate = debounce(update, delayMs);

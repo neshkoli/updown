@@ -109,7 +109,13 @@
         </aside>
 
         <textarea id="editor" class="editor" placeholder="Type markdown here…"></textarea>
-        <div id="preview" class="preview">Preview</div>
+        <div class="preview-container">
+          <div id="preview" class="preview">Preview</div>
+          <div id="metadata-panel" class="metadata-panel hidden">
+            <div class="metadata-header">Metadata</div>
+            <div id="metadata-content" class="metadata-content"></div>
+          </div>
+        </div>
       </main>
 
       <!-- Link URL status bar (like browser status bar) -->

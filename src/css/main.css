@@ -108,9 +108,17 @@ html, body {
   outline: none;
 }
 
+.preview-container {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .preview {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   padding: 0.75rem 1rem;
   overflow: auto;
   background: #fafafa;
@@ -119,12 +127,70 @@ html, body {
   line-height: 1.5;
 }
 
+/* Metadata panel (frontmatter) */
+.metadata-panel {
+  flex-shrink: 0;
+  max-height: 35%;
+  border-top: 1px solid #d0d7de;
+  background: #f6f8fa;
+  overflow-y: auto;
+  font-size: 0.85rem;
+}
+
+.metadata-panel.hidden {
+  display: none;
+}
+
+.metadata-header {
+  position: sticky;
+  top: 0;
+  padding: 0.35rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #656d76;
+  background: #eef1f5;
+  border-bottom: 1px solid #d0d7de;
+  user-select: none;
+}
+
+.metadata-content {
+  padding: 0.5rem 1rem;
+}
+
+.metadata-content table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.metadata-content td {
+  padding: 0.2rem 0.5rem 0.2rem 0;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.metadata-content td.meta-key {
+  white-space: nowrap;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #24292f;
+  width: 1%;
+  padding-right: 1rem;
+}
+
+.metadata-content td.meta-value {
+  color: #57606a;
+  word-break: break-word;
+}
+
 /* View mode: Source — only editor visible */
 .view-mode-source .editor {
   display: block;
   border-right: none;
 }
-.view-mode-source .preview {
+.view-mode-source .preview-container {
   display: none;
 }
 
@@ -132,8 +198,8 @@ html, body {
 .view-mode-preview .editor {
   display: none;
 }
-.view-mode-preview .preview {
-  display: block;
+.view-mode-preview .preview-container {
+  display: flex;
 }
 
 /* View mode: Split — both visible side by side (default) */
@@ -141,8 +207,8 @@ html, body {
   display: block;
   border-right: 1px solid #ddd;
 }
-.view-mode-split .preview {
-  display: block;
+.view-mode-split .preview-container {
+  display: flex;
 }
 
 /* Folder panel (Phase 8-10) */
