@@ -361,3 +361,83 @@ html, body {
 .preview a {
   cursor: pointer;
 }
+
+/* About dialog */
+.about-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.about-overlay.hidden {
+  display: none;
+}
+
+.about-dialog {
+  background: #fff;
+  border-radius: 14px;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  min-width: 300px;
+  max-width: 360px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  user-select: none;
+}
+
+.about-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+  margin-bottom: 0.75rem;
+}
+
+.about-name {
+  margin: 0 0 0.15rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.02em;
+}
+
+.about-version {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: #86868b;
+}
+
+.about-desc {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.about-author {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.about-link {
+  display: inline-block;
+  margin: 0.25rem 0 0.75rem;
+  font-size: 0.85rem;
+  color: #0066cc;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.about-link:hover {
+  text-decoration: underline;
+}
+
+.about-copyright {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #acacac;
+}

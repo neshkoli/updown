@@ -1,0 +1,50 @@
+# Build and publish a GitHub Release when a version tag (v*) is pushed.
+# Produces a macOS .dmg that users can download and install.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build release (Quick Look + Tauri app and DMG)
+        env:
+          CI: false
+        run: ./scripts/build-release.sh
+
+      - name: Find DMG artifact
+        id: dmg
+        run: |
+          DMG=$(echo src-tauri/target/release/bundle/dmg/UpDown_*_aarch64.dmg)
+          if [ ! -f "$DMG" ]; then
+            echo "Error: DMG not found"
+            exit 1
+          fi
+          echo "path=$DMG" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$DMG")" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release and upload DMG
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.dmg.outputs.path }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

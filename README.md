@@ -27,7 +27,16 @@ A lightweight, cross-platform Markdown viewer and editor built with [Tauri 2](ht
 | Icons     | [Lucide](https://lucide.dev/) (inline SVG) |
 | Testing   | [Vitest](https://vitest.dev/) + [happy-dom](https://github.com/nicedayfor/happy-dom) |
 
-## Prerequisites
+## Installation (macOS)
+
+1. Go to [GitHub Releases](https://github.com/neshkoli/updown/releases) and download the latest **UpDown_X.Y.Z_aarch64.dmg** (Apple Silicon).
+2. Open the DMG (double-click it in your Downloads folder).
+3. Drag **UpDown** into the **Applications** folder.
+4. Eject the DMG (right-click the disk icon on the desktop → Eject), then open UpDown from Applications.
+
+**First launch:** If macOS says the app is from an unidentified developer, **right-click UpDown → Open**, then click **Open** in the dialog. You only need to do this once.
+
+## Prerequisites (for building from source)
 
 - [Node.js](https://nodejs.org/) (v18+)
 - [Rust](https://www.rust-lang.org/tools/install) toolchain
@@ -49,19 +58,17 @@ npm test
 npx tauri build
 ```
 
-To include the Quick Look plugin in the macOS build (requires Xcode):
+To build a full release (Quick Look plugin + app + DMG) in one step (requires Xcode on macOS):
 
 ```bash
-# Build the Quick Look generator (copies to src-tauri/resources/)
-npm run build:ql
-
-# Then build the app as usual
-npx tauri build
+./scripts/build-release.sh
 ```
+
+Or step by step: run `npm run build:ql`, then `npx tauri build`. (In CI the workflow sets `CI: false` so the build succeeds.)
 
 The production build outputs:
 - **macOS**: `src-tauri/target/release/bundle/macos/UpDown.app`
-- **DMG**: `src-tauri/target/release/bundle/dmg/UpDown_2.0.0_aarch64.dmg`
+- **DMG**: `src-tauri/target/release/bundle/dmg/UpDown_<version>_aarch64.dmg`
 
 ## Quick Look (macOS)
 

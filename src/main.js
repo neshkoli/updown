@@ -43,6 +43,7 @@ window.addEventListener('DOMContentLoaded', () => {
     viewPreview: () => setViewMode(document, 'preview'),
     viewSplit: () => setViewMode(document, 'split'),
     installQuickLook: installQuickLookPlugin,
+    about: showAboutDialog,
   });
 
   // Wire markdown formatting commands
@@ -92,6 +93,49 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // First-run: offer to install the Quick Look plugin for Markdown
     offerQuickLookInstall();
+  }
+});
+
+/**
+ * Show the custom About dialog.
+ */
+function showAboutDialog() {
+  const overlay = document.getElementById('about-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('hidden');
+
+  // Close on clicking the overlay background (not the dialog itself)
+  function onOverlayClick(e) {
+    if (e.target === overlay) {
+      overlay.classList.add('hidden');
+      overlay.removeEventListener('click', onOverlayClick);
+      document.removeEventListener('keydown', onEsc);
+    }
+  }
+
+  // Close on Escape key
+  function onEsc(e) {
+    if (e.key === 'Escape') {
+      overlay.classList.add('hidden');
+      overlay.removeEventListener('click', onOverlayClick);
+      document.removeEventListener('keydown', onEsc);
+    }
+  }
+
+  overlay.addEventListener('click', onOverlayClick);
+  document.addEventListener('keydown', onEsc);
+}
+
+// Handle clicks on the GitHub link in the About dialog
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('.about-link');
+  if (!link) return;
+  e.preventDefault();
+  const href = link.getAttribute('href');
+  if (href && window.__TAURI__?.opener?.openUrl) {
+    window.__TAURI__.opener.openUrl(href);
+  } else if (href) {
+    window.open(href, '_blank');
   }
 });
 

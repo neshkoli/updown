@@ -118,8 +118,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![get_opened_file, install_quicklook_plugin])
         .setup(|app| {
             // App menu (first submenu becomes the app menu on macOS)
+            let about_item = MenuItem::with_id(app, "about", "About UpDown", true, None::<&str>)?;
+
             let app_menu = SubmenuBuilder::new(app, "UpDown")
-                .item(&PredefinedMenuItem::about(app, None::<&str>, None)?)
+                .item(&about_item)
                 .separator()
                 .item(&PredefinedMenuItem::hide(app, None::<&str>)?)
                 .item(&PredefinedMenuItem::hide_others(app, None::<&str>)?)
@@ -206,6 +208,12 @@ pub fn run() {
         .on_menu_event(|app, event| {
             let id = event.id().0.as_str();
             match id {
+                "about" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let js = "window.__menuAction && window.__menuAction('about')";
+                        let _ = window.eval(js);
+                    }
+                }
                 "install_quicklook" => {
                     if let Some(window) = app.get_webview_window("main") {
                         let js = "window.__menuAction && window.__menuAction('installQuickLook')";
