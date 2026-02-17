@@ -142,6 +142,8 @@ Developed by [neshkoli](https://github.com/neshkoli)
 
 GitHub: [https://github.com/neshkoli/updown](https://github.com/neshkoli/updown)
 
+Landing page: [neshkoli.github.io/updown](https://neshkoli.github.io/updown/) (GitHub Pages)
+
 ## License
 
 MIT

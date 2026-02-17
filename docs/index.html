@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UpDown — Markdown viewer &amp; editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-stone-50 text-stone-900 antialiased">
+    <header class="border-b border-stone-200 bg-white/80 backdrop-blur">
+      <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+        <div class="flex flex-col items-center gap-6 text-center sm:gap-8">
+          <img
+            src="icon.png"
+            alt="UpDown"
+            width="128"
+            height="128"
+            class="h-24 w-24 rounded-2xl shadow-md sm:h-28 sm:w-28"
+          />
+          <div>
+            <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">UpDown</h1>
+            <p class="mt-2 text-lg text-stone-600 sm:text-xl">
+              A lightweight, Mac-first Markdown viewer and editor
+            </p>
+          </div>
+          <a
+            href="https://github.com/neshkoli/updown/releases/latest"
+            class="inline-flex items-center rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Download for macOS
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+      <!-- Features -->
+      <section class="mb-16 sm:mb-20" aria-labelledby="features-heading">
+        <h2 id="features-heading" class="mb-8 text-2xl font-semibold tracking-tight sm:text-3xl">
+          Features
+        </h2>
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h3 class="font-medium text-stone-900">Three view modes</h3>
+            <p class="mt-1 text-sm text-stone-600">Source, Preview, and Split (side-by-side)</p>
+          </div>
+          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h3 class="font-medium text-stone-900">Markdown toolbar</h3>
+            <p class="mt-1 text-sm text-stone-600">Bold, Italic, headings, link, image, lists, blockquote, code, table</p>
+          </div>
+          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h3 class="font-medium text-stone-900">Live preview</h3>
+            <p class="mt-1 text-sm text-stone-600">Rendered output updates as you type</p>
+          </div>
+          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h3 class="font-medium text-stone-900">Bidirectional text</h3>
+            <p class="mt-1 text-sm text-stone-600">Hebrew and other RTL text align automatically</p>
+          </div>
+          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h3 class="font-medium text-stone-900">Folder panel</h3>
+            <p class="mt-1 text-sm text-stone-600">Browsable sidebar for markdown files, drag-to-resize</p>
+          </div>
+          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h3 class="font-medium text-stone-900">File operations</h3>
+            <p class="mt-1 text-sm text-stone-600">New, Open, Save, Save As via toolbar or native dialogs</p>
+          </div>
+          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h3 class="font-medium text-stone-900">Drag and drop</h3>
+            <p class="mt-1 text-sm text-stone-600">Drop .md files onto the window to open them</p>
+          </div>
+          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h3 class="font-medium text-stone-900">Autosave</h3>
+            <p class="mt-1 text-sm text-stone-600">Saves changes automatically after a short idle period</p>
+          </div>
+          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h3 class="font-medium text-stone-900">Quick Look</h3>
+            <p class="mt-1 text-sm text-stone-600">Press Space in Finder to preview .md files (macOS)</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screenshots: placeholder boxes. Replace with real app screenshots (e.g. docs/screenshots/main.png, docs/screenshots/quick-look.png) when available. -->
+      <section class="mb-16 sm:mb-20" aria-labelledby="screenshots-heading">
+        <h2 id="screenshots-heading" class="mb-8 text-2xl font-semibold tracking-tight sm:text-3xl">
+          Screenshots
+        </h2>
+        <div class="grid gap-6 sm:grid-cols-2">
+          <div
+            class="flex aspect-video items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-500 shadow-sm"
+            aria-hidden="true"
+          >
+            <span class="text-sm font-medium">App window (split view)</span>
+          </div>
+          <div
+            class="flex aspect-video items-center justify-center rounded-xl border border-stone-200 bg-stone-100 text-stone-500 shadow-sm"
+            aria-hidden="true"
+          >
+            <span class="text-sm font-medium">Quick Look in Finder</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Install & use -->
+      <section class="mb-16 sm:mb-20" aria-labelledby="install-heading">
+        <h2 id="install-heading" class="mb-8 text-2xl font-semibold tracking-tight sm:text-3xl">
+          Install &amp; use
+        </h2>
+        <div class="rounded-xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
+          <ol class="list-decimal space-y-4 pl-5">
+            <li>
+              <strong>Download</strong> — Go to
+              <a
+                href="https://github.com/neshkoli/updown/releases/latest"
+                class="text-blue-600 underline hover:text-blue-700"
+              >GitHub Releases</a>
+              and download the latest <strong>UpDown_X.Y.Z_aarch64.dmg</strong> (Apple Silicon).
+            </li>
+            <li>
+              <strong>Open the DMG</strong> — Double-click it in your Downloads folder.
+            </li>
+            <li>
+              <strong>Install</strong> — Drag <strong>UpDown</strong> into the <strong>Applications</strong> folder.
+            </li>
+            <li>
+              <strong>Launch</strong> — Eject the DMG, then open UpDown from Applications.
+            </li>
+          </ol>
+          <p class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <strong>First launch:</strong> If macOS says the app is from an unidentified developer,
+            <strong>right-click UpDown → Open</strong>, then click <strong>Open</strong> in the dialog. You only need to do this once.
+          </p>
+          <div class="mt-6 border-t border-stone-200 pt-6">
+            <h3 class="font-medium text-stone-900">Quick Look (macOS)</h3>
+            <p class="mt-2 text-sm text-stone-600">
+              UpDown can install a Quick Look plugin so you can preview Markdown files by pressing <strong>Space</strong> in Finder.
+              On first launch, UpDown may offer to install it; you can also use <strong>File → Install Quick Look Plugin…</strong>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Download CTA -->
+      <section class="mb-16 text-center sm:mb-20" aria-labelledby="download-heading">
+        <h2 id="download-heading" class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
+          Get UpDown
+        </h2>
+        <a
+          href="https://github.com/neshkoli/updown/releases/latest"
+          class="inline-flex items-center rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Download from GitHub Releases
+        </a>
+        <p class="mt-4">
+          <a
+            href="https://github.com/neshkoli/updown/releases"
+            class="text-sm text-stone-600 underline hover:text-stone-900"
+          >View all releases</a>
+        </p>
+      </section>
+    </main>
+
+    <footer class="border-t border-stone-200 bg-white py-8">
+      <div class="mx-auto max-w-5xl px-4 sm:px-6">
+        <div class="flex flex-col items-center gap-2 text-center text-sm text-stone-600">
+          <p>
+            <a
+              href="https://github.com/neshkoli/updown"
+              class="underline hover:text-stone-900"
+            >github.com/neshkoli/updown</a>
+          </p>
+          <p>MIT License · Built with Tauri 2</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
