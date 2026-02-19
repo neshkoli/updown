@@ -68,6 +68,10 @@ body li > p {
   margin: 0.25em 0;
 }
 
+body li > p {
+  margin: 0.25em 0;
+}
+
 /* Blockquote */
 body blockquote {
   margin: 0.5em 0;

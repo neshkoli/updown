@@ -1,15 +1,18 @@
 import Cocoa
 import QuickLookUI
 import JavaScriptCore
+import WebKit
 
-class PreviewViewController: NSViewController, QLPreviewingController {
+class PreviewViewController: NSViewController, QLPreviewingController, WKNavigationDelegate {
 
-    private var splitView: NSSplitView!
-    private var scrollView: NSScrollView!
-    private var textView: NSTextView!
+    private var webView: WKWebView!
     private var metadataScrollView: NSScrollView!
     private var metadataTextView: NSTextView!
     private var metadataSeparator: NSBox!
+    private var metadataPanelMinHeightConstraint: NSLayoutConstraint!
+
+    /// Held between `loadHTMLString` and the WKNavigationDelegate callback.
+    private var pendingCompletionHandler: ((Error?) -> Void)?
 
     override func loadView() {
         NSLog("UpDownPreview: loadView called")
@@ -17,25 +20,11 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 600, height: 400))
         container.autoresizingMask = [.width, .height]
 
-        // --- Main content area ---
-        scrollView = NSScrollView(frame: container.bounds)
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
-        scrollView.autoresizingMask = [.width, .height]
-        scrollView.drawsBackground = true
-
-        textView = NSTextView(frame: scrollView.contentView.bounds)
-        textView.isEditable = false
-        textView.isSelectable = true
-        textView.autoresizingMask = [.width]
-        textView.textContainerInset = NSSize(width: 20, height: 20)
-        textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = false
-        textView.textContainer?.widthTracksTextView = true
-        textView.drawsBackground = true
-        textView.backgroundColor = .white
-
-        scrollView.documentView = textView
+        // --- Main content area: WKWebView (full CSS support, no double-marker issue) ---
+        let config = WKWebViewConfiguration()
+        webView = WKWebView(frame: container.bounds, configuration: config)
+        webView.navigationDelegate = self
+        webView.translatesAutoresizingMaskIntoConstraints = false
 
         // --- Separator line ---
         metadataSeparator = NSBox(frame: .zero)
@@ -65,44 +54,62 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         metadataSeparator.isHidden = true
         metadataScrollView.isHidden = true
 
-        // Use a vertical stack: main content fills, separator + metadata at bottom
-        container.addSubview(scrollView)
+        container.addSubview(webView)
         container.addSubview(metadataSeparator)
         container.addSubview(metadataScrollView)
 
-        // Layout with constraints
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
         metadataScrollView.translatesAutoresizingMaskIntoConstraints = false
 
+        metadataPanelMinHeightConstraint = metadataScrollView.heightAnchor.constraint(greaterThanOrEqualToConstant: 60)
+
         NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: container.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            webView.topAnchor.constraint(equalTo: container.topAnchor),
+            webView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
 
             metadataSeparator.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             metadataSeparator.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            metadataSeparator.topAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            metadataSeparator.topAnchor.constraint(equalTo: webView.bottomAnchor),
 
             metadataScrollView.topAnchor.constraint(equalTo: metadataSeparator.bottomAnchor),
             metadataScrollView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             metadataScrollView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             metadataScrollView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            metadataScrollView.heightAnchor.constraint(greaterThanOrEqualToConstant: 60),
+            metadataPanelMinHeightConstraint,
             metadataScrollView.heightAnchor.constraint(lessThanOrEqualTo: container.heightAnchor, multiplier: 0.35),
         ])
 
-        // When no metadata, scrollView fills the whole container
-        let scrollBottomToContainer = scrollView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
-        scrollBottomToContainer.priority = .defaultLow
-        scrollBottomToContainer.isActive = true
+        // When no metadata, webView fills the whole container
+        let webViewBottomToContainer = webView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        webViewBottomToContainer.priority = .defaultLow
+        webViewBottomToContainer.isActive = true
 
         self.view = container
+    }
+
+    // MARK: - WKNavigationDelegate
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        NSLog("UpDownPreview: WebView finished loading")
+        pendingCompletionHandler?(nil)
+        pendingCompletionHandler = nil
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        NSLog("UpDownPreview: WebView navigation failed: %@", error.localizedDescription)
+        pendingCompletionHandler?(nil)
+        pendingCompletionHandler = nil
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        NSLog("UpDownPreview: WebView provisional navigation failed: %@", error.localizedDescription)
+        pendingCompletionHandler?(nil)
+        pendingCompletionHandler = nil
     }
 
     // MARK: - Frontmatter parsing
 
     /// Parses YAML frontmatter from the source. Returns (metadata string, body without frontmatter).
-    /// Frontmatter must start at line 0 with "---" and close with "---".
     private func extractFrontmatter(from source: String) -> (metadata: String?, body: String) {
         let lines = source.components(separatedBy: "\n")
         guard lines.count >= 3 else { return (nil, source) }
@@ -110,7 +117,6 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         let firstLine = lines[0].trimmingCharacters(in: .whitespaces)
         guard firstLine == "---" else { return (nil, source) }
 
-        // Find the closing ---
         var closingIndex: Int? = nil
         for i in 1..<lines.count {
             if lines[i].trimmingCharacters(in: .whitespaces) == "---" {
@@ -123,7 +129,6 @@ class PreviewViewController: NSViewController, QLPreviewingController {
 
         let metadataLines = Array(lines[1..<endIdx])
         let metadata = metadataLines.joined(separator: "\n")
-
         let bodyLines = Array(lines[(endIdx + 1)...])
         let body = bodyLines.joined(separator: "\n")
 
@@ -131,7 +136,6 @@ class PreviewViewController: NSViewController, QLPreviewingController {
     }
 
     /// Parses simple YAML key-value pairs into an array of (key, value) tuples.
-    /// Handles nested keys with indentation and multi-line values.
     private func parseYAMLMetadata(_ yaml: String) -> [(key: String, value: String)] {
         var result: [(key: String, value: String)] = []
         let lines = yaml.components(separatedBy: "\n")
@@ -140,12 +144,10 @@ class PreviewViewController: NSViewController, QLPreviewingController {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             if trimmed.isEmpty { continue }
 
-            // Match "key: value" pattern
             if let colonRange = trimmed.range(of: ":") {
                 let key = String(trimmed[trimmed.startIndex..<colonRange.lowerBound]).trimmingCharacters(in: .whitespaces)
                 var value = String(trimmed[colonRange.upperBound...]).trimmingCharacters(in: .whitespaces)
 
-                // Strip surrounding quotes
                 if (value.hasPrefix("\"") && value.hasSuffix("\"")) ||
                    (value.hasPrefix("'") && value.hasSuffix("'")) {
                     value = String(value.dropFirst().dropLast())
@@ -155,7 +157,6 @@ class PreviewViewController: NSViewController, QLPreviewingController {
                     result.append((key: key, value: value))
                 }
             } else if trimmed.hasPrefix("- ") {
-                // List item under a key — append to last key's value
                 let item = String(trimmed.dropFirst(2))
                 if !result.isEmpty {
                     let last = result.removeLast()
@@ -172,7 +173,6 @@ class PreviewViewController: NSViewController, QLPreviewingController {
     private func buildMetadataAttributedString(from pairs: [(key: String, value: String)]) -> NSAttributedString {
         let result = NSMutableAttributedString()
 
-        // Title
         let titleStyle = NSMutableParagraphStyle()
         titleStyle.paragraphSpacing = 6
         result.append(NSAttributedString(string: "Metadata\n", attributes: [
@@ -189,18 +189,15 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         pairStyle.tabStops = [NSTextTab(textAlignment: .left, location: 120)]
 
         for pair in pairs {
-            // Key
             result.append(NSAttributedString(string: pair.key, attributes: [
                 .font: keyFont,
                 .foregroundColor: NSColor.labelColor,
                 .paragraphStyle: pairStyle
             ]))
-            // Separator
             result.append(NSAttributedString(string: "  ", attributes: [
                 .font: valueFont,
                 .foregroundColor: NSColor.tertiaryLabelColor,
             ]))
-            // Value
             let valueColor: NSColor = pair.value.isEmpty ? .tertiaryLabelColor : .secondaryLabelColor
             let displayValue = pair.value.isEmpty ? "(empty)" : pair.value
             result.append(NSAttributedString(string: displayValue + "\n", attributes: [
@@ -218,7 +215,6 @@ class PreviewViewController: NSViewController, QLPreviewingController {
     func preparePreviewOfFile(at url: URL, completionHandler handler: @escaping (Error?) -> Void) {
         NSLog("UpDownPreview: preparePreviewOfFile called for %@", url.path)
 
-        // In sandbox, start accessing the security-scoped resource
         let didAccess = url.startAccessingSecurityScopedResource()
         NSLog("UpDownPreview: startAccessingSecurityScopedResource = %d", didAccess)
         defer {
@@ -231,11 +227,12 @@ class PreviewViewController: NSViewController, QLPreviewingController {
             NSLog("UpDownPreview: Read file successfully, length = %d", source.count)
         } catch {
             NSLog("UpDownPreview: Cannot read file: %@", error.localizedDescription)
-            displayOnMain(text: "Cannot read file: \(error.localizedDescription)", isError: true, handler: handler)
+            DispatchQueue.main.async { [weak self] in
+                self?.showError("Cannot read file: \(error.localizedDescription)", handler: handler)
+            }
             return
         }
 
-        // Extract frontmatter
         let (metadataRaw, body) = extractFrontmatter(from: source)
         var metadataPairs: [(key: String, value: String)] = []
         if let meta = metadataRaw {
@@ -246,44 +243,36 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         let bundle = Bundle(for: type(of: self))
         NSLog("UpDownPreview: Bundle path = %@", bundle.bundlePath)
 
-        // Load markdown-it.min.js
         guard let mdJSURL = bundle.url(forResource: "markdown-it.min", withExtension: "js"),
               let mdJS = try? String(contentsOf: mdJSURL, encoding: .utf8) else {
             NSLog("UpDownPreview: Cannot load markdown-it.min.js")
-            displayOnMain(text: "Cannot load markdown-it.min.js from bundle resources", isError: true, handler: handler)
+            DispatchQueue.main.async { [weak self] in
+                self?.showError("Cannot load markdown-it.min.js from bundle resources", handler: handler)
+            }
             return
         }
-        NSLog("UpDownPreview: markdown-it.min.js loaded, length = %d", mdJS.count)
 
-        // Load bidi.js
         let bidiJS: String
         if let bidiURL = bundle.url(forResource: "bidi", withExtension: "js"),
            let b = try? String(contentsOf: bidiURL, encoding: .utf8) {
             bidiJS = b
-            NSLog("UpDownPreview: bidi.js loaded")
         } else {
             bidiJS = ""
-            NSLog("UpDownPreview: bidi.js not found (optional)")
         }
 
-        // Load CSS
         let css: String
         if let cssURL = bundle.url(forResource: "preview", withExtension: "css"),
            let c = try? String(contentsOf: cssURL, encoding: .utf8) {
             css = c
-            NSLog("UpDownPreview: preview.css loaded")
         } else {
             css = ""
-            NSLog("UpDownPreview: preview.css not found")
         }
 
-        // Use JavaScriptCore to render markdown -> HTML (only the body, not frontmatter)
         let ctx = JSContext()!
         ctx.exceptionHandler = { _, exception in
             NSLog("UpDownPreview JSContext error: %@", exception?.toString() ?? "unknown")
         }
 
-        // Provide globals that markdown-it's UMD wrapper expects
         let logBlock: @convention(block) (JSValue) -> Void = { _ in }
         ctx.setObject(logBlock, forKeyedSubscript: "logFn" as NSString)
         ctx.evaluateScript("""
@@ -293,21 +282,20 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         """)
         ctx.evaluateScript(mdJS)
 
-        // Verify markdownit loaded
         let markdownitCheck = ctx.evaluateScript("typeof markdownit")
         if markdownitCheck?.toString() != "function" {
             let typeStr = markdownitCheck?.toString() ?? "nil"
             NSLog("UpDownPreview: markdown-it failed to initialize, typeof = %@", typeStr)
-            displayOnMain(text: "markdown-it failed to initialize (typeof markdownit = \(typeStr))", isError: true, handler: handler)
+            DispatchQueue.main.async { [weak self] in
+                self?.showError("markdown-it failed to initialize (typeof markdownit = \(typeStr))", handler: handler)
+            }
             return
         }
-        NSLog("UpDownPreview: markdown-it initialized OK")
 
         if !bidiJS.isEmpty {
             ctx.evaluateScript(bidiJS)
         }
 
-        // Render only the body (without frontmatter)
         ctx.setObject(body, forKeyedSubscript: "__source" as NSString)
         let htmlValue = ctx.evaluateScript("""
             (function() {
@@ -323,35 +311,27 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         let bodyHTML = htmlValue?.toString() ?? ""
         NSLog("UpDownPreview: Rendered HTML length = %d", bodyHTML.count)
 
-        if bodyHTML.isEmpty {
-            NSLog("UpDownPreview: bodyHTML is empty, showing source as plain text")
-            displayOnMain(text: body, isError: false, handler: handler)
-            return
-        }
-
         let fullHTML = """
         <!DOCTYPE html>
         <html>
         <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>\(css)</style>
         </head>
         <body>
         \(bodyHTML)
-        <hr style="margin-top:2em;border:none;border-top:1px solid #d0d7de;">
-        <p style="text-align:center;color:#999;font-size:0.85em;margin-top:0.5em;">UpDown · 2026</p>
         </body>
         </html>
         """
 
-        // MUST run NSAttributedString(html:) and UI updates on the main thread
         DispatchQueue.main.async { [weak self] in
             guard let self = self else {
                 handler(nil)
                 return
             }
 
-            // Show/hide metadata panel
+            // Show/hide metadata panel; collapse height so no empty space when absent
             let hasMetadata = !metadataPairs.isEmpty
             self.metadataSeparator.isHidden = !hasMetadata
             self.metadataScrollView.isHidden = !hasMetadata
@@ -360,219 +340,29 @@ class PreviewViewController: NSViewController, QLPreviewingController {
                 let metaAttr = self.buildMetadataAttributedString(from: metadataPairs)
                 self.metadataTextView.textStorage?.setAttributedString(metaAttr)
 
-                // Calculate ideal height for metadata panel
                 self.metadataTextView.layoutManager?.ensureLayout(for: self.metadataTextView.textContainer!)
                 let metaHeight = self.metadataTextView.layoutManager?.usedRect(for: self.metadataTextView.textContainer!).height ?? 80
                 let idealHeight = min(max(metaHeight + 28, 60), self.view.bounds.height * 0.35)
-
-                // Update height constraint
-                for constraint in self.metadataScrollView.constraints {
-                    if constraint.firstAttribute == .height && constraint.relation == .greaterThanOrEqual {
-                        constraint.constant = idealHeight
-                    }
-                }
-            }
-
-            NSLog("UpDownPreview: Attempting NSAttributedString(html:) on main thread")
-
-            if let htmlData = fullHTML.data(using: .utf8),
-               let attrString = NSAttributedString(
-                   html: htmlData,
-                   options: [
-                       .documentType: NSAttributedString.DocumentType.html,
-                       .characterEncoding: String.Encoding.utf8.rawValue
-                   ],
-                   documentAttributes: nil
-               ) {
-                NSLog("UpDownPreview: NSAttributedString created OK, length = %d", attrString.length)
-                self.textView.textStorage?.setAttributedString(attrString)
-                handler(nil)
+                self.metadataPanelMinHeightConstraint.constant = idealHeight
             } else {
-                NSLog("UpDownPreview: NSAttributedString(html:) returned nil, falling back to plain text")
-                self.displayPlainMarkdown(source: body, handler: handler)
+                self.metadataPanelMinHeightConstraint.constant = 0
             }
+
+            // Store handler — WKNavigationDelegate fires it after load completes
+            self.pendingCompletionHandler = handler
+            self.webView.loadHTMLString(fullHTML, baseURL: nil)
         }
     }
 
-    // MARK: - Fallback plain-text markdown rendering
+    // MARK: - Helpers
 
-    /// Display markdown source with basic attributed string formatting (no WebKit dependency)
-    private func displayPlainMarkdown(source: String, handler: @escaping (Error?) -> Void) {
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 4
-        paragraphStyle.paragraphSpacing = 8
-
-        let baseFont = NSFont.systemFont(ofSize: 14)
-        let boldFont = NSFont.boldSystemFont(ofSize: 14)
-        let h1Font = NSFont.boldSystemFont(ofSize: 28)
-        let h2Font = NSFont.boldSystemFont(ofSize: 22)
-        let h3Font = NSFont.boldSystemFont(ofSize: 18)
-        let codeFont = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
-
-        let result = NSMutableAttributedString()
-
-        let lines = source.components(separatedBy: "\n")
-        for line in lines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            let attrLine: NSAttributedString
-
-            if trimmed.hasPrefix("### ") {
-                let text = String(trimmed.dropFirst(4))
-                attrLine = NSAttributedString(string: text + "\n", attributes: [
-                    .font: h3Font,
-                    .foregroundColor: NSColor.textColor,
-                    .paragraphStyle: paragraphStyle
-                ])
-            } else if trimmed.hasPrefix("## ") {
-                let text = String(trimmed.dropFirst(3))
-                attrLine = NSAttributedString(string: text + "\n", attributes: [
-                    .font: h2Font,
-                    .foregroundColor: NSColor.textColor,
-                    .paragraphStyle: paragraphStyle
-                ])
-            } else if trimmed.hasPrefix("# ") {
-                let text = String(trimmed.dropFirst(2))
-                attrLine = NSAttributedString(string: text + "\n", attributes: [
-                    .font: h1Font,
-                    .foregroundColor: NSColor.textColor,
-                    .paragraphStyle: paragraphStyle
-                ])
-            } else if trimmed.hasPrefix("```") {
-                attrLine = NSAttributedString(string: line + "\n", attributes: [
-                    .font: codeFont,
-                    .foregroundColor: NSColor.secondaryLabelColor,
-                    .paragraphStyle: paragraphStyle
-                ])
-            } else if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") {
-                let bulletStyle = NSMutableParagraphStyle()
-                bulletStyle.lineSpacing = 4
-                bulletStyle.paragraphSpacing = 4
-                bulletStyle.headIndent = 20
-                bulletStyle.firstLineHeadIndent = 8
-                let text = "• " + String(trimmed.dropFirst(2))
-                attrLine = NSAttributedString(string: text + "\n", attributes: [
-                    .font: baseFont,
-                    .foregroundColor: NSColor.textColor,
-                    .paragraphStyle: bulletStyle
-                ])
-            } else if trimmed.hasPrefix("> ") {
-                let quoteStyle = NSMutableParagraphStyle()
-                quoteStyle.lineSpacing = 4
-                quoteStyle.headIndent = 20
-                quoteStyle.firstLineHeadIndent = 20
-                let text = String(trimmed.dropFirst(2))
-                attrLine = NSAttributedString(string: text + "\n", attributes: [
-                    .font: NSFont(descriptor: baseFont.fontDescriptor.withSymbolicTraits(.italic), size: 14) ?? baseFont,
-                    .foregroundColor: NSColor.secondaryLabelColor,
-                    .paragraphStyle: quoteStyle
-                ])
-            } else if trimmed.hasPrefix("---") || trimmed.hasPrefix("***") || trimmed.hasPrefix("___") {
-                let hrStyle = NSMutableParagraphStyle()
-                hrStyle.paragraphSpacing = 12
-                attrLine = NSAttributedString(string: "────────────────────────────────\n", attributes: [
-                    .font: baseFont,
-                    .foregroundColor: NSColor.separatorColor,
-                    .paragraphStyle: hrStyle
-                ])
-            } else if trimmed.isEmpty {
-                attrLine = NSAttributedString(string: "\n")
-            } else {
-                // Apply inline formatting: **bold**, *italic*, `code`
-                let mutable = NSMutableAttributedString(string: line + "\n", attributes: [
-                    .font: baseFont,
-                    .foregroundColor: NSColor.textColor,
-                    .paragraphStyle: paragraphStyle
-                ])
-                applyInlineFormatting(to: mutable, boldFont: boldFont, codeFont: codeFont)
-                attrLine = mutable
-            }
-
-            result.append(attrLine)
-        }
-
-        // Append footer
-        let separatorStyle = NSMutableParagraphStyle()
-        separatorStyle.paragraphSpacingBefore = 16
-        result.append(NSAttributedString(string: "────────────────────────────────\n", attributes: [
-            .font: baseFont,
-            .foregroundColor: NSColor.separatorColor,
-            .paragraphStyle: separatorStyle
-        ]))
-
-        let footerStyle = NSMutableParagraphStyle()
-        footerStyle.alignment = .center
-        result.append(NSAttributedString(string: "UpDown · 2026\n", attributes: [
-            .font: NSFont.systemFont(ofSize: 12),
-            .foregroundColor: NSColor.tertiaryLabelColor,
-            .paragraphStyle: footerStyle
-        ]))
-
-        textView.textStorage?.setAttributedString(result)
-        handler(nil)
-    }
-
-    // MARK: - Inline formatting helpers
-
-    private func applyInlineFormatting(to attrString: NSMutableAttributedString, boldFont: NSFont, codeFont: NSFont) {
-        let text = attrString.string
-
-        applyPattern("`([^`]+)`", to: attrString, in: text, attributes: [
-            .font: codeFont,
-            .foregroundColor: NSColor.systemPurple,
-            .backgroundColor: NSColor(white: 0.95, alpha: 1.0)
-        ])
-
-        applyPattern("\\*\\*([^*]+)\\*\\*", to: attrString, in: text, attributes: [
-            .font: boldFont
-        ])
-
-        applyPattern("(?<!\\*)\\*([^*]+)\\*(?!\\*)", to: attrString, in: text, attributes: [
-            .font: NSFont(descriptor: NSFont.systemFont(ofSize: 14).fontDescriptor.withSymbolicTraits(.italic), size: 14) ?? NSFont.systemFont(ofSize: 14)
-        ])
-    }
-
-    private func applyPattern(_ pattern: String, to attrString: NSMutableAttributedString, in text: String, attributes: [NSAttributedString.Key: Any]) {
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return }
-        let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        let matches = regex.matches(in: text, range: range)
-        for match in matches.reversed() {
-            if match.numberOfRanges >= 2 {
-                let fullRange = match.range(at: 0)
-                let innerRange = match.range(at: 1)
-                guard let innerSwiftRange = Range(innerRange, in: text) else { continue }
-                let innerText = String(text[innerSwiftRange])
-                let replacement = NSAttributedString(string: innerText, attributes: attributes)
-                attrString.replaceCharacters(in: fullRange, with: replacement)
-            }
-        }
-    }
-
-    private func displayOnMain(text: String, isError: Bool, handler: @escaping (Error?) -> Void) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else {
-                handler(nil)
-                return
-            }
-            if isError {
-                let errorAttr = NSAttributedString(
-                    string: text,
-                    attributes: [
-                        .foregroundColor: NSColor.systemRed,
-                        .font: NSFont.systemFont(ofSize: 14)
-                    ]
-                )
-                self.textView.textStorage?.setAttributedString(errorAttr)
-            } else {
-                let plainAttr = NSAttributedString(
-                    string: text,
-                    attributes: [
-                        .foregroundColor: NSColor.textColor,
-                        .font: NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
-                    ]
-                )
-                self.textView.textStorage?.setAttributedString(plainAttr)
-            }
-            handler(nil)
-        }
+    private func showError(_ message: String, handler: @escaping (Error?) -> Void) {
+        let errorHTML = """
+        <!DOCTYPE html><html><head><meta charset="utf-8">
+        <style>body{font-family:system-ui;color:#c00;padding:2em;}</style>
+        </head><body><p>\(message)</p></body></html>
+        """
+        pendingCompletionHandler = handler
+        webView.loadHTMLString(errorHTML, baseURL: nil)
     }
 }
