@@ -34,7 +34,13 @@ A lightweight, cross-platform Markdown viewer and editor built with [Tauri 2](ht
 3. Drag **UpDown** into the **Applications** folder.
 4. Eject the DMG (right-click the disk icon on the desktop → Eject), then open UpDown from Applications.
 
-**First launch:** If macOS says the app is from an unidentified developer, **right-click UpDown → Open**, then click **Open** in the dialog. You only need to do this once.
+**First launch — Gatekeeper:** Because the app is not yet notarized by Apple, macOS may show *"UpDown is damaged and can't be opened"* or an unidentified-developer warning. To fix this, open **Terminal** and run:
+
+```bash
+xattr -d com.apple.quarantine /Applications/UpDown.app
+```
+
+Then open UpDown normally from Applications. You only need to do this once.
 
 ## Prerequisites (for building from source)
 

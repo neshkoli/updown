@@ -145,10 +145,16 @@
               <strong>Launch</strong> — Eject the DMG, then open UpDown from Applications.
             </li>
           </ol>
-          <p class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <strong>First launch:</strong> If macOS says the app is from an unidentified developer,
-            <strong>right-click UpDown → Open</strong>, then click <strong>Open</strong> in the dialog. You only need to do this once.
-          </p>
+          <div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p class="font-semibold">First launch — Gatekeeper</p>
+            <p class="mt-1">
+              Because the app is not yet notarized by Apple, macOS may show
+              <em>"UpDown is damaged and can't be opened."</em>
+              To fix this, open <strong>Terminal</strong> and run:
+            </p>
+            <pre class="mt-2 overflow-x-auto rounded bg-amber-100 px-3 py-2 font-mono text-xs text-amber-950">xattr -d com.apple.quarantine /Applications/UpDown.app</pre>
+            <p class="mt-2">Then open UpDown normally from Applications. You only need to do this once.</p>
+          </div>
           <div class="mt-6 border-t border-stone-200 pt-6">
             <h3 class="font-medium text-stone-900">Quick Look (macOS)</h3>
             <p class="mt-2 text-sm text-stone-600">
