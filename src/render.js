@@ -21,6 +21,27 @@ const md = window.markdownit({
   typographer: true,  // smart quotes, dashes
 });
 
+// Initialize mermaid (disable auto-start; we call mermaid.run() manually after each render)
+if (window.mermaid) {
+  window.mermaid.initialize({ startOnLoad: false, theme: 'default' });
+}
+
+// Render mermaid fenced blocks as <pre class="mermaid"> instead of <pre><code>
+const defaultFence = md.renderer.rules.fence ||
+  function (tokens, idx, options, env, self) {
+    return self.renderToken(tokens, idx, options);
+  };
+
+md.renderer.rules.fence = function (tokens, idx, options, env, self) {
+  const token = tokens[idx];
+  const lang = (token.info || '').trim().toLowerCase();
+  if (lang === 'mermaid') {
+    const code = token.content.trim();
+    return `<pre class="mermaid">${escapeHtml(code)}</pre>\n`;
+  }
+  return defaultFence(tokens, idx, options, env, self);
+};
+
 // Generate heading IDs so internal anchor links work
 md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
   const token = tokens[idx];
@@ -139,6 +160,14 @@ export function setupLivePreview(editor, preview, delayMs = 150) {
     // Render body (without frontmatter) into preview
     preview.innerHTML = renderMarkdown(body);
     applyBidi(preview);
+
+    // Render any mermaid diagrams found in the preview
+    if (window.mermaid) {
+      const diagrams = preview.querySelectorAll('pre.mermaid');
+      if (diagrams.length > 0) {
+        window.mermaid.run({ nodes: diagrams });
+      }
+    }
 
     // Update metadata panel
     if (metadata && metadataPanel && metadataContent) {

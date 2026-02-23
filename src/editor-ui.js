@@ -4,6 +4,12 @@
 
 let viewMode = 'split';
 
+/** Preview zoom level in percent (default 100, range 50–200). */
+let previewZoom = 100;
+const ZOOM_MIN = 50;
+const ZOOM_MAX = 200;
+const ZOOM_STEP = 10;
+
 /** Registry of file-action callbacks set by the main module. */
 let fileActionHandlers = {};
 
@@ -74,6 +80,26 @@ export function setViewMode(doc, mode) {
 }
 
 /**
+ * Apply the current previewZoom to the preview element and update the label.
+ * @param {Document} doc
+ */
+function applyZoom(doc) {
+  const preview = doc.getElementById('preview');
+  const label = doc.getElementById('zoom-level');
+  if (preview) {
+    preview.style.setProperty('--preview-zoom', previewZoom / 100);
+  }
+  if (label) {
+    label.textContent = previewZoom + '%';
+  }
+  // Disable buttons at limits
+  const zoomOut = doc.querySelector('[data-action="zoomOut"]');
+  const zoomIn = doc.querySelector('[data-action="zoomIn"]');
+  if (zoomOut) zoomOut.disabled = previewZoom <= ZOOM_MIN;
+  if (zoomIn) zoomIn.disabled = previewZoom >= ZOOM_MAX;
+}
+
+/**
  * Set up all toolbar button event listeners.
  */
 export function setupToolbar(doc) {
@@ -84,14 +110,21 @@ export function setupToolbar(doc) {
       const md = btn.dataset.md;
 
       if (mode) {
-        // View mode button
         setViewMode(doc, mode);
       } else if (md) {
-        // Markdown formatting command
         if (mdCommandHandler) mdCommandHandler(md);
+      } else if (action === 'zoomIn') {
+        previewZoom = Math.min(ZOOM_MAX, previewZoom + ZOOM_STEP);
+        applyZoom(doc);
+      } else if (action === 'zoomOut') {
+        previewZoom = Math.max(ZOOM_MIN, previewZoom - ZOOM_STEP);
+        applyZoom(doc);
       } else if (action) {
         onAction(action);
       }
     });
   });
+
+  // Apply default zoom on init
+  applyZoom(doc);
 }

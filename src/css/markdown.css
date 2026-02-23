@@ -120,7 +120,6 @@
 #preview td {
   padding: 0.4em 0.75em;
   border: 1px solid #d0d7de;
-  text-align: left;
 }
 
 #preview th {
@@ -146,4 +145,19 @@
 
 #preview em {
   font-style: italic;
+}
+
+/* Mermaid diagrams */
+#preview pre.mermaid {
+  background: transparent;
+  border: none;
+  padding: 1rem 0;
+  text-align: center;
+  overflow-x: auto;
+  zoom: var(--preview-zoom, 1);
+}
+
+#preview pre.mermaid svg {
+  max-width: 100%;
+  height: auto;
 }

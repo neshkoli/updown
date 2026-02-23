@@ -9,10 +9,11 @@
     "build:ql": "./scripts/build-qlgenerator.sh"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2",
+    "@tauri-apps/cli": "^2.10.0",
     "happy-dom": "^15.11.7",
     "lucide-static": "^0.563.0",
     "markdown-it": "^14.1.0",
+    "mermaid": "^11.12.3",
     "vitest": "^2.1.6"
   },
   "dependencies": {

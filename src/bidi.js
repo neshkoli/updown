@@ -44,7 +44,13 @@ export function applyBidi(container) {
     const text = el.textContent || '';
     const dir = detectDirection(text);
     el.setAttribute('dir', dir);
-    el.style.textAlign = dir === 'rtl' ? 'right' : 'left';
+    if (dir === 'rtl') {
+      el.style.textAlign = 'right';
+    } else if (el.tagName !== 'TD' && el.tagName !== 'TH') {
+      // For table cells, preserve column alignment set by the markdown author.
+      // For other block elements, explicitly set left so RTL→LTR switches reset correctly.
+      el.style.textAlign = 'left';
+    }
   }
 
   // 2. Set dir on ul/ol based on the overall direction of their text content.

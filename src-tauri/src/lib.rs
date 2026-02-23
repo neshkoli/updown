@@ -74,6 +74,17 @@ fn install_ql_from(src: &std::path::Path) -> Result<String, String> {
     copy_dir_recursive(src, &dest)
         .map_err(|e| format!("Failed to copy Quick Look app: {}", e))?;
 
+    // Register the Quick Look extension with the system (required for it to appear)
+    let appex = dest.join("Contents").join("PlugIns").join("UpDownPreview.appex");
+    if appex.exists() {
+        let path = appex.to_string_lossy();
+        let _ = Command::new("pluginkit").args(["-a", path.as_ref()]).output();
+        // Ensure the extension is enabled (idempotent)
+        let _ = Command::new("pluginkit")
+            .args(["-e", "use", "-i", "com.noam.updown.quicklook.preview"])
+            .output();
+    }
+
     // Open the app briefly so macOS discovers the embedded extension
     let _ = Command::new("/usr/bin/open").arg(&dest).output();
 

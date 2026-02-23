@@ -60,6 +60,14 @@ This paragraph is mostly English, so it aligns to the left.
 
 פסקה נוספת בעברית עם קישור פנימי: [חזרה להקדמה](#introduction) וקישור חיצוני: [ויקיפדיה](https://he.wikipedia.org/wiki/Markdown).
 
+## Table
+
+| Tables   |      Are      |  Cool |
+|----------|:-------------:|------:|
+| col 1 is |  left-aligned | $1600 |
+| col 2 is |    centered   |   $12 |
+| col 3 is | right-aligned |    $1 |
+
 ## Conclusion
 
 You've reached the end! Try these links to navigate back:

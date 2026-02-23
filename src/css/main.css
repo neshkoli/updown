@@ -82,6 +82,23 @@ html, body {
   border-color: #93c5fd;
 }
 
+/* Zoom controls — hidden in source-only mode */
+.view-mode-source .zoom-buttons,
+.view-mode-source .zoom-separator {
+  display: none;
+}
+
+/* Zoom level label */
+.zoom-level {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: #666;
+  min-width: 3ch;
+  text-align: center;
+  user-select: none;
+  -webkit-app-region: no-drag;
+}
+
 /* Markdown formatting buttons — hidden in preview-only mode */
 .view-mode-preview .md-buttons,
 .view-mode-preview .md-separator {
@@ -123,7 +140,7 @@ html, body {
   overflow: auto;
   background: #fafafa;
   color: #333;
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--preview-zoom, 1));
   line-height: 1.5;
 }
 

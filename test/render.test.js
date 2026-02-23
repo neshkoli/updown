@@ -66,6 +66,62 @@ describe('renderMarkdown', () => {
     expect(renderMarkdown(null)).toBe('');
     expect(renderMarkdown(undefined)).toBe('');
   });
+
+  describe('table alignment', () => {
+    const src = [
+      '| Left | Center | Right |',
+      '|------|:------:|------:|',
+      '| a    |   b    |     c |',
+    ].join('\n');
+
+    it('renders a table element', () => {
+      expect(renderMarkdown(src)).toContain('<table>');
+    });
+
+    it('applies center alignment to header', () => {
+      const html = renderMarkdown(src);
+      expect(html).toContain('<th style="text-align:center">Center</th>');
+    });
+
+    it('applies right alignment to header', () => {
+      const html = renderMarkdown(src);
+      expect(html).toContain('<th style="text-align:right">Right</th>');
+    });
+
+    it('left-aligned column has no inline style (browser default)', () => {
+      const html = renderMarkdown(src);
+      expect(html).toContain('<th>Left</th>');
+    });
+
+    it('applies center alignment to body cells', () => {
+      const html = renderMarkdown(src);
+      expect(html).toContain('<td style="text-align:center">b</td>');
+    });
+
+    it('applies right alignment to body cells', () => {
+      const html = renderMarkdown(src);
+      expect(html).toContain('<td style="text-align:right">c</td>');
+    });
+  });
+
+  describe('mermaid fenced blocks', () => {
+    it('renders mermaid block as <pre class="mermaid">', () => {
+      const html = renderMarkdown('```mermaid\nflowchart LR\n  A --> B\n```');
+      expect(html).toContain('<pre class="mermaid">');
+      expect(html).toContain('flowchart LR');
+    });
+
+    it('does not wrap mermaid in <code>', () => {
+      const html = renderMarkdown('```mermaid\nflowchart LR\n  A --> B\n```');
+      expect(html).not.toContain('<code>');
+    });
+
+    it('escapes HTML in mermaid source', () => {
+      const html = renderMarkdown('```mermaid\nA --> B["<script>"];\n```');
+      expect(html).not.toContain('<script>');
+      expect(html).toContain('&lt;script&gt;');
+    });
+  });
 });
 
 describe('debounce', () => {
