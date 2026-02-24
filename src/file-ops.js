@@ -117,6 +117,9 @@ export async function fileOpenPath(path, editor, refreshPreview) {
     currentFilePath = path;
     markClean(content);
     refreshPreview();
+
+    // Record in recent files (updates the native "Open Recent" menu).
+    window.__TAURI__.core.invoke('add_recent_file', { path }).catch(() => {});
   } catch (err) {
     showError(`Failed to open file: ${err.message || err}`);
   }
