@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setStorageProvider } from '../src/storage/provider.js';
 import {
   setupFolderPanel, toggleFolderPanel, syncToFile,
   getCurrentFolder, setupPanelResize,
@@ -6,7 +7,6 @@ import {
 
 describe('folder-panel', () => {
   let fileSelectCallback;
-  let savedTauri;
   let mockStorage;
 
   function createPanelDOM() {
@@ -28,9 +28,7 @@ describe('folder-panel', () => {
   beforeEach(() => {
     createPanelDOM();
     fileSelectCallback = vi.fn();
-    savedTauri = window.__TAURI__;
 
-    // Mock localStorage since happy-dom's may be limited
     mockStorage = {};
     vi.stubGlobal('localStorage', {
       getItem: vi.fn((key) => mockStorage[key] ?? null),
@@ -40,11 +38,7 @@ describe('folder-panel', () => {
   });
 
   afterEach(() => {
-    if (savedTauri) {
-      window.__TAURI__ = savedTauri;
-    } else {
-      delete window.__TAURI__;
-    }
+    setStorageProvider(null);
   });
 
   describe('toggleFolderPanel', () => {
@@ -71,24 +65,22 @@ describe('folder-panel', () => {
   });
 
   describe('setupFolderPanel', () => {
-    it('populates folder list with entries from readDir', async () => {
-      window.__TAURI__ = {
-        fs: {
-          readDir: vi.fn().mockResolvedValue([
-            { name: 'notes.md', isDirectory: false },
-            { name: 'subfolder', isDirectory: true },
-            { name: 'image.png', isDirectory: false },
-            { name: 'readme.markdown', isDirectory: false },
-          ]),
-        },
-        core: { invoke: vi.fn().mockRejectedValue(new Error('mock')) },
-      };
+    it('populates folder list with entries from provider', async () => {
+      const listDir = vi.fn().mockResolvedValue([
+        { id: '/home/user/subfolder', name: 'subfolder', isDirectory: true },
+        { id: '/home/user/notes.md', name: 'notes.md', isDirectory: false },
+        { id: '/home/user/readme.markdown', name: 'readme.markdown', isDirectory: false },
+      ]);
+      const getParent = vi.fn().mockResolvedValue('/home');
+      setStorageProvider({
+        listDirectory: listDir,
+        getParentFolderId: getParent,
+      });
 
       mockStorage['updown-last-folder'] = '/home/user';
       await setupFolderPanel(fileSelectCallback);
 
       const items = document.querySelectorAll('.folder-item');
-      // Should have: "..", subfolder, notes.md, readme.markdown (image.png filtered)
       expect(items.length).toBe(4);
       expect(items[0].textContent).toBe('..');
       expect(items[1].textContent).toContain('subfolder');
@@ -97,34 +89,32 @@ describe('folder-panel', () => {
     });
 
     it('filters out hidden directories', async () => {
-      window.__TAURI__ = {
-        fs: {
-          readDir: vi.fn().mockResolvedValue([
-            { name: '.git', isDirectory: true },
-            { name: 'docs', isDirectory: true },
-          ]),
-        },
-        core: { invoke: vi.fn().mockRejectedValue(new Error('mock')) },
-      };
+      const listDir = vi.fn().mockResolvedValue([
+        { id: '/home/user/docs', name: 'docs', isDirectory: true },
+      ]);
+      const getParent = vi.fn().mockResolvedValue('/home');
+      setStorageProvider({
+        listDirectory: listDir,
+        getParentFolderId: getParent,
+      });
 
       mockStorage['updown-last-folder'] = '/home/user';
       await setupFolderPanel(fileSelectCallback);
 
       const items = document.querySelectorAll('.folder-item');
-      // ".." and "docs" only (.git filtered)
       expect(items.length).toBe(2);
       expect(items[1].textContent).toContain('docs');
     });
 
     it('calls fileSelectCallback when a file item is clicked', async () => {
-      window.__TAURI__ = {
-        fs: {
-          readDir: vi.fn().mockResolvedValue([
-            { name: 'test.md', isDirectory: false },
-          ]),
-        },
-        core: { invoke: vi.fn().mockRejectedValue(new Error('mock')) },
-      };
+      const listDir = vi.fn().mockResolvedValue([
+        { id: '/home/user/test.md', name: 'test.md', isDirectory: false },
+      ]);
+      const getParent = vi.fn().mockResolvedValue('/home');
+      setStorageProvider({
+        listDirectory: listDir,
+        getParentFolderId: getParent,
+      });
 
       mockStorage['updown-last-folder'] = '/home/user';
       await setupFolderPanel(fileSelectCallback);
@@ -135,18 +125,20 @@ describe('folder-panel', () => {
     });
 
     it('navigates into a subfolder when clicked', async () => {
-      const readDir = vi.fn()
+      const listDir = vi.fn()
         .mockResolvedValueOnce([
-          { name: 'sub', isDirectory: true },
+          { id: '/home/sub', name: 'sub', isDirectory: true },
         ])
         .mockResolvedValueOnce([
-          { name: 'inner.md', isDirectory: false },
+          { id: '/home/sub/inner.md', name: 'inner.md', isDirectory: false },
         ]);
-
-      window.__TAURI__ = {
-        fs: { readDir },
-        core: { invoke: vi.fn().mockRejectedValue(new Error('mock')) },
-      };
+      const getParent = vi.fn()
+        .mockResolvedValueOnce('/home')
+        .mockResolvedValueOnce('/home');
+      setStorageProvider({
+        listDirectory: listDir,
+        getParentFolderId: getParent,
+      });
 
       mockStorage['updown-last-folder'] = '/home';
       await setupFolderPanel(fileSelectCallback);
@@ -154,27 +146,28 @@ describe('folder-panel', () => {
       const dirItem = document.querySelector('.folder-dir');
       dirItem.click();
 
-      // Wait for async navigateTo
       await new Promise(r => setTimeout(r, 10));
 
-      expect(readDir).toHaveBeenCalledWith('/home/sub');
+      expect(listDir).toHaveBeenCalledWith('/home/sub');
       const pathEl = document.querySelector('.folder-path');
       expect(pathEl.textContent).toContain('sub');
     });
 
     it('navigates to parent when ".." is clicked', async () => {
-      const readDir = vi.fn()
+      const listDir = vi.fn()
         .mockResolvedValueOnce([
-          { name: 'file.md', isDirectory: false },
+          { id: '/home/user/file.md', name: 'file.md', isDirectory: false },
         ])
         .mockResolvedValueOnce([
-          { name: 'child', isDirectory: true },
+          { id: '/home/user/child', name: 'child', isDirectory: true },
         ]);
-
-      window.__TAURI__ = {
-        fs: { readDir },
-        core: { invoke: vi.fn().mockRejectedValue(new Error('mock')) },
-      };
+      const getParent = vi.fn()
+        .mockResolvedValueOnce('/home/user')
+        .mockResolvedValueOnce('/home/user');
+      setStorageProvider({
+        listDirectory: listDir,
+        getParentFolderId: getParent,
+      });
 
       mockStorage['updown-last-folder'] = '/home/user/docs';
       await setupFolderPanel(fileSelectCallback);
@@ -184,14 +177,16 @@ describe('folder-panel', () => {
 
       await new Promise(r => setTimeout(r, 10));
 
-      expect(readDir).toHaveBeenCalledWith('/home/user');
+      expect(listDir).toHaveBeenCalledWith('/home/user');
     });
 
     it('saves current folder to localStorage', async () => {
-      window.__TAURI__ = {
-        fs: { readDir: vi.fn().mockResolvedValue([]) },
-        core: { invoke: vi.fn().mockRejectedValue(new Error('mock')) },
-      };
+      const listDir = vi.fn().mockResolvedValue([]);
+      const getParent = vi.fn().mockResolvedValue(null);
+      setStorageProvider({
+        listDirectory: listDir,
+        getParentFolderId: getParent,
+      });
 
       mockStorage['updown-last-folder'] = '/home/user';
       await setupFolderPanel(fileSelectCallback);
@@ -202,16 +197,20 @@ describe('folder-panel', () => {
 
   describe('syncToFile', () => {
     it('navigates to the parent folder of the given file', async () => {
-      const readDir = vi.fn()
-        .mockResolvedValueOnce([])  // initial load
-        .mockResolvedValueOnce([    // after sync
-          { name: 'notes.md', isDirectory: false },
+      const listDir = vi.fn()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          { id: '/home/user/docs/notes.md', name: 'notes.md', isDirectory: false },
         ]);
-
-      window.__TAURI__ = {
-        fs: { readDir },
-        core: { invoke: vi.fn().mockRejectedValue(new Error('mock')) },
-      };
+      const getParent = vi.fn((id) => {
+        if (id === '/home/user/docs/notes.md') return Promise.resolve('/home/user/docs');
+        if (id === '/home/user') return Promise.resolve('/home');
+        return Promise.resolve(null);
+      });
+      setStorageProvider({
+        listDirectory: listDir,
+        getParentFolderId: getParent,
+      });
 
       mockStorage['updown-last-folder'] = '/home/user';
       await setupFolderPanel(fileSelectCallback);
@@ -220,12 +219,11 @@ describe('folder-panel', () => {
 
       await new Promise(r => setTimeout(r, 10));
 
-      expect(readDir).toHaveBeenCalledWith('/home/user/docs');
+      expect(listDir).toHaveBeenCalledWith('/home/user/docs');
     });
 
     it('does nothing for null path', () => {
       syncToFile(null);
-      // No error thrown
     });
   });
 

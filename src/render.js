@@ -14,64 +14,83 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
-// Initialize markdown-it with sensible defaults
-const md = window.markdownit({
-  html: false,        // don't allow raw HTML in source
-  linkify: true,      // auto-link URLs
-  typographer: true,  // smart quotes, dashes
-});
+// Lazily initialized markdown-it instance.
+// Cannot be created at module-evaluation time because in the web build (ESM
+// via Vite), all static imports are hoisted and evaluated before the
+// importing module's body runs, so window.markdownit may not yet be assigned
+// when this module is first executed.
+let _md = null;
 
-// Initialize mermaid (disable auto-start; we call mermaid.run() manually after each render)
-if (window.mermaid) {
-  window.mermaid.initialize({ startOnLoad: false, theme: 'default' });
+function getMd() {
+  if (_md) return _md;
+
+  const MarkdownIt = window.markdownit;
+  if (!MarkdownIt) {
+    throw new Error(
+      'markdown-it not available. Ensure it is loaded (UMD script or window.markdownit assignment) before calling render functions.'
+    );
+  }
+
+  _md = MarkdownIt({
+    html: false,        // don't allow raw HTML in source
+    linkify: true,      // auto-link URLs
+    typographer: true,  // smart quotes, dashes
+  });
+
+  // Initialize mermaid once, alongside md
+  if (window.mermaid) {
+    window.mermaid.initialize({ startOnLoad: false, theme: 'default' });
+  }
+
+  // Render mermaid fenced blocks as <pre class="mermaid"> instead of <pre><code>
+  const defaultFence = _md.renderer.rules.fence ||
+    function (tokens, idx, options, env, self) {
+      return self.renderToken(tokens, idx, options);
+    };
+
+  _md.renderer.rules.fence = function (tokens, idx, options, env, self) {
+    const token = tokens[idx];
+    const lang = (token.info || '').trim().toLowerCase();
+    if (lang === 'mermaid') {
+      const code = token.content.trim();
+      return `<pre class="mermaid">${escapeHtml(code)}</pre>\n`;
+    }
+    return defaultFence(tokens, idx, options, env, self);
+  };
+
+  // Generate heading IDs so internal anchor links work
+  _md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
+    const token = tokens[idx];
+    const content = tokens[idx + 1]?.content || '';
+    const id = content
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+    if (id) {
+      token.attrSet('id', id);
+    }
+    return self.renderToken(tokens, idx, options);
+  };
+
+  // Add title attribute to links for native tooltip
+  const defaultLinkOpen = _md.renderer.rules.link_open ||
+    function (tokens, idx, options, env, self) {
+      return self.renderToken(tokens, idx, options);
+    };
+
+  _md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+    const token = tokens[idx];
+    const href = token.attrGet('href');
+    if (href && !token.attrGet('title')) {
+      token.attrSet('title', href);
+    }
+    return defaultLinkOpen(tokens, idx, options, env, self);
+  };
+
+  return _md;
 }
-
-// Render mermaid fenced blocks as <pre class="mermaid"> instead of <pre><code>
-const defaultFence = md.renderer.rules.fence ||
-  function (tokens, idx, options, env, self) {
-    return self.renderToken(tokens, idx, options);
-  };
-
-md.renderer.rules.fence = function (tokens, idx, options, env, self) {
-  const token = tokens[idx];
-  const lang = (token.info || '').trim().toLowerCase();
-  if (lang === 'mermaid') {
-    const code = token.content.trim();
-    return `<pre class="mermaid">${escapeHtml(code)}</pre>\n`;
-  }
-  return defaultFence(tokens, idx, options, env, self);
-};
-
-// Generate heading IDs so internal anchor links work
-md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
-  const token = tokens[idx];
-  const content = tokens[idx + 1]?.content || '';
-  const id = content
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
-  if (id) {
-    token.attrSet('id', id);
-  }
-  return self.renderToken(tokens, idx, options);
-};
-
-// Add title attribute to links for native tooltip
-const defaultLinkOpen = md.renderer.rules.link_open ||
-  function (tokens, idx, options, env, self) {
-    return self.renderToken(tokens, idx, options);
-  };
-
-md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
-  const token = tokens[idx];
-  const href = token.attrGet('href');
-  if (href && !token.attrGet('title')) {
-    token.attrSet('title', href);
-  }
-  return defaultLinkOpen(tokens, idx, options, env, self);
-};
 
 /**
  * Extract YAML frontmatter from markdown source.
@@ -139,7 +158,7 @@ export function extractFrontmatter(source) {
  * @returns {string}
  */
 export function renderMarkdown(source) {
-  return md.render(source || '');
+  return getMd().render(source || '');
 }
 
 /**

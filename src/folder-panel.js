@@ -1,18 +1,19 @@
 /**
  * Folder panel for UpDown.
- * Lists markdown files and sub-folders in the current directory.
+ * Lists markdown files and sub-folders using the storage provider.
  * Supports navigation via ".." (parent) and folder clicks.
  * Remembers last opened folder in localStorage.
  */
 
+import { getStorageProvider } from './storage/provider.js';
+
 const STORAGE_KEY = 'updown-last-folder';
 
 let currentFolder = null;
-let onFileSelect = null; // callback: (filePath) => void
+let onFileSelect = null; // callback: (fileId) => void
 
 /**
  * Get the last used folder from localStorage, default to root.
- * The Tauri home-dir API in setupFolderPanel provides the real fallback.
  * @returns {string}
  */
 function getInitialFolder() {
@@ -28,69 +29,78 @@ function saveFolder(folder) {
 }
 
 /**
- * Get parent directory of a path.
- * @param {string} path
- * @returns {string}
+ * Read directory entries from the storage provider.
+ * Returns { id, name, isDirectory } entries.
+ * @param {string} folderId
+ * @returns {Promise<Array<{id: string, name: string, isDirectory: boolean}>>}
  */
-function parentDir(path) {
-  if (!path || path === '/') return '/';
-  const parts = path.replace(/\/$/, '').split('/');
-  parts.pop();
-  return parts.join('/') || '/';
+async function readDirectory(folderId) {
+  const provider = getStorageProvider();
+  if (!provider?.listDirectory) return [];
+
+  try {
+    const entries = await provider.listDirectory(folderId);
+    return entries;
+  } catch (err) {
+    console.error('Failed to read directory:', folderId, err);
+    return [];
+  }
 }
 
 /**
- * Read directory entries from Tauri FS.
- * Returns { name, isDirectory, isFile } entries.
- * @param {string} dirPath
- * @returns {Promise<Array<{name: string, isDirectory: boolean, path: string}>>}
+ * Get the parent folder id.
+ * @param {string} folderId
+ * @returns {Promise<string|null>}
  */
-async function readDirectory(dirPath) {
-  if (!window.__TAURI__) return [];
-  const { readDir } = window.__TAURI__.fs;
+async function getParentFolderId(folderId) {
+  const provider = getStorageProvider();
+  if (!provider?.getParentFolderId) return null;
+  return provider.getParentFolderId(folderId);
+}
 
-  try {
-    const entries = await readDir(dirPath);
-    return entries
-      .filter(entry => entry.name) // skip entries with no name
-      .map(entry => ({
-        name: entry.name,
-        isDirectory: Boolean(entry.isDirectory),
-        path: dirPath.replace(/\/$/, '') + '/' + entry.name,
-      }))
-      .filter(entry => {
-        // Show only: folders, .md/.markdown files
-        if (entry.isDirectory) return !entry.name.startsWith('.');
-        return /\.(md|markdown)$/i.test(entry.name);
-      })
-      .sort((a, b) => {
-        // Directories first, then files; alphabetical within each group
-        if (a.isDirectory && !b.isDirectory) return -1;
-        if (!a.isDirectory && b.isDirectory) return 1;
-        return a.name.localeCompare(b.name);
-      });
-  } catch (err) {
-    console.error('Failed to read directory:', dirPath, err);
-    return [];
+/**
+ * Check if we're at root (no parent).
+ * @param {string} folderId
+ * @returns {boolean}
+ */
+function isRoot(folderId) {
+  return !folderId || folderId === '/';
+}
+
+/**
+ * Get display path for the folder (abbreviate home for Tauri paths).
+ * @param {string} folderId
+ * @returns {string}
+ */
+function getDisplayPath(folderId) {
+  if (!folderId) return '/';
+  if (folderId === 'root') return 'My Drive';
+  let display = folderId;
+  const homeMatch = folderId.match(/^\/Users\/[^/]+/);
+  if (homeMatch) {
+    display = folderId.replace(homeMatch[0], '~');
   }
+  return display || '/';
 }
 
 /**
  * Render the folder list into the panel element.
  * @param {HTMLElement} listEl
  * @param {Array} entries
- * @param {string} folderPath
+ * @param {string} folderId
+ * @param {boolean} hasParent - whether to show ".." entry
  */
-function renderList(listEl, entries, folderPath) {
+function renderList(listEl, entries, folderId, hasParent) {
   listEl.innerHTML = '';
 
   // ".." entry (go to parent), unless at root
-  if (folderPath !== '/') {
+  if (hasParent) {
     const li = document.createElement('div');
     li.className = 'folder-item folder-parent';
     li.textContent = '..';
     li.title = 'Go to parent folder';
-    li.addEventListener('click', () => navigateTo(parentDir(folderPath), listEl));
+    li.dataset.parent = 'true';
+    li.addEventListener('click', () => navigateToParent(listEl));
     listEl.appendChild(li);
   }
 
@@ -98,14 +108,15 @@ function renderList(listEl, entries, folderPath) {
     const li = document.createElement('div');
     li.className = 'folder-item ' + (entry.isDirectory ? 'folder-dir' : 'folder-file');
     li.textContent = entry.isDirectory ? `📁 ${entry.name}` : entry.name;
-    li.title = entry.path;
+    li.title = entry.id;
+    li.dataset.id = entry.id;
+    li.dataset.isDir = String(entry.isDirectory);
 
     if (entry.isDirectory) {
-      li.addEventListener('click', () => navigateTo(entry.path, listEl));
+      li.addEventListener('click', () => navigateTo(entry.id, listEl));
     } else {
       li.addEventListener('click', () => {
-        if (onFileSelect) onFileSelect(entry.path);
-        // Highlight selected file
+        if (onFileSelect) onFileSelect(entry.id);
         listEl.querySelectorAll('.folder-item').forEach(el => el.classList.remove('selected'));
         li.classList.add('selected');
       });
@@ -114,7 +125,7 @@ function renderList(listEl, entries, folderPath) {
     listEl.appendChild(li);
   }
 
-  if (entries.length === 0 && folderPath === '/') {
+  if (entries.length === 0 && !hasParent) {
     const empty = document.createElement('div');
     empty.className = 'folder-empty';
     empty.textContent = 'No markdown files';
@@ -123,46 +134,60 @@ function renderList(listEl, entries, folderPath) {
 }
 
 /**
- * Navigate to a folder: read it, render list, save to storage.
- * @param {string} folderPath
+ * Navigate to parent folder.
  * @param {HTMLElement} listEl
  */
-async function navigateTo(folderPath, listEl) {
-  currentFolder = folderPath;
-  saveFolder(folderPath);
+async function navigateToParent(listEl) {
+  const parentId = await getParentFolderId(currentFolder);
+  if (parentId !== null) {
+    await navigateTo(parentId, listEl);
+  }
+}
+
+/**
+ * Navigate to a folder: read it, render list, save to storage.
+ * @param {string} folderId
+ * @param {HTMLElement} listEl
+ */
+async function navigateTo(folderId, listEl) {
+  currentFolder = folderId;
+  saveFolder(folderId);
 
   // Update the folder path display
   const pathEl = listEl.parentElement?.querySelector('.folder-path');
   if (pathEl) {
-    // Show abbreviated path: replace home prefix with ~
-    let display = folderPath;
-    const homeMatch = folderPath.match(/^\/Users\/[^/]+/);
-    if (homeMatch) {
-      display = folderPath.replace(homeMatch[0], '~');
-    }
-    pathEl.textContent = display || '/';
-    pathEl.title = folderPath;
+    pathEl.textContent = getDisplayPath(folderId);
+    pathEl.title = folderId;
   }
 
-  const entries = await readDirectory(folderPath);
-  renderList(listEl, entries, folderPath);
+  const entries = await readDirectory(folderId);
+  const parentId = await getParentFolderId(folderId);
+  const hasParent = parentId !== null && parentId !== undefined;
+
+  renderList(listEl, entries, folderId, hasParent);
 }
 
 /**
  * Navigate to the folder containing a specific file (sync on open).
- * @param {string} filePath
+ * @param {string} fileId
  */
-export function syncToFile(filePath) {
-  if (!filePath) return;
-  const folder = parentDir(filePath);
+export async function syncToFile(fileId) {
+  if (!fileId) return;
+
+  const provider = getStorageProvider();
+  if (!provider?.getParentFolderId) return;
+
+  const folderId = await provider.getParentFolderId(fileId);
+  if (folderId === undefined || folderId === null) return;
+
   const listEl = document.getElementById('folder-list');
-  if (listEl && folder !== currentFolder) {
-    navigateTo(folder, listEl);
+  if (listEl && folderId !== currentFolder) {
+    await navigateTo(folderId, listEl);
   }
 }
 
 /**
- * Get the current folder path.
+ * Get the current folder id.
  * @returns {string|null}
  */
 export function getCurrentFolder() {
@@ -170,8 +195,20 @@ export function getCurrentFolder() {
 }
 
 /**
+ * Set a custom empty state message (e.g. "Sign in to browse files" for web guest).
+ * @param {HTMLElement} listEl
+ * @param {string} message
+ */
+export function setEmptyStateMessage(listEl, message) {
+  const empty = listEl?.querySelector('.folder-empty');
+  if (empty) {
+    empty.textContent = message;
+  }
+}
+
+/**
  * Initialize the folder panel.
- * @param {function} fileSelectCallback - called with (filePath) when a file is clicked
+ * @param {function} fileSelectCallback - called with (fileId) when a file is clicked
  */
 export async function setupFolderPanel(fileSelectCallback) {
   onFileSelect = fileSelectCallback;
@@ -180,32 +217,16 @@ export async function setupFolderPanel(fileSelectCallback) {
   const listEl = document.getElementById('folder-list');
   if (!panel || !listEl) return;
 
-  // Resolve the initial folder
   let initialFolder = getInitialFolder();
 
-  // If we're in Tauri, use the home dir API for a reliable path
-  if (window.__TAURI__) {
+  // If provider has getRootFolderId, use it when no saved folder
+  const provider = getStorageProvider();
+  if (provider?.getRootFolderId && !localStorage.getItem(STORAGE_KEY)) {
     try {
-      const homeDir = await window.__TAURI__.core.invoke('plugin:path|resolve_directory', {
-        directory: 'Home',
-        path: '',
-      });
-      if (homeDir && !localStorage.getItem(STORAGE_KEY)) {
-        initialFolder = homeDir;
-      }
+      const root = await provider.getRootFolderId();
+      if (root) initialFolder = root;
     } catch {
-      // Fallback: try path API
-      try {
-        const { homeDir } = window.__TAURI__.path;
-        if (homeDir) {
-          const home = await homeDir();
-          if (home && !localStorage.getItem(STORAGE_KEY)) {
-            initialFolder = home.replace(/\/$/, '');
-          }
-        }
-      } catch {
-        // Use the guessed path
-      }
+      // Use default
     }
   }
 
@@ -242,7 +263,6 @@ export function setupPanelResize() {
     document.removeEventListener('mouseup', onMouseUp);
     document.body.style.userSelect = '';
     document.body.style.cursor = '';
-    // Save width preference
     localStorage.setItem('updown-panel-width', panel.style.width);
   }
 
@@ -256,7 +276,6 @@ export function setupPanelResize() {
     document.addEventListener('mouseup', onMouseUp);
   });
 
-  // Restore saved width
   const savedWidth = localStorage.getItem('updown-panel-width');
   if (savedWidth) {
     panel.style.width = savedWidth;

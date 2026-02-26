@@ -2,15 +2,22 @@
  * UpDown — Tauri entry point.
  * Wires toolbar, editor, preview, file ops, drag-drop, autosave, and folder panel.
  */
+import { setStorageProvider } from './storage/provider.js';
+import { createTauriProvider } from './storage/tauri-provider.js';
 import { setupToolbar, setViewMode, getViewMode, setFileActionHandlers, setViewActionHandlers, setMdCommandHandler, onAction } from './editor-ui.js';
 import { setupLivePreview } from './render.js';
-import { fileNew, fileOpen, fileOpenPath, fileSave, fileSaveAs, getCurrentFilePath } from './file-ops.js';
+import { fileNew, fileOpen, fileOpenPath, fileRefresh, fileSave, fileSaveAs, getCurrentFilePath } from './file-ops.js';
 import { setupDragDrop } from './drag-drop.js';
 import { setupAutosave } from './autosave.js';
 import { setupFolderPanel, setupPanelResize, toggleFolderPanel, syncToFile } from './folder-panel.js';
 import { execMdCommand } from './md-commands.js';
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Set storage provider for Tauri (local file system)
+  const tauriProvider = createTauriProvider();
+  if (tauriProvider) {
+    setStorageProvider(tauriProvider);
+  }
   const editor = document.getElementById('editor');
   const preview = document.getElementById('preview');
   let refreshPreview = () => {};
@@ -32,6 +39,10 @@ window.addEventListener('DOMContentLoaded', () => {
     },
     saveAs: async () => {
       await fileSaveAs(editor);
+      syncToFile(getCurrentFilePath());
+    },
+    refresh: async () => {
+      await fileRefresh(editor, refreshPreview);
       syncToFile(getCurrentFilePath());
     },
   });

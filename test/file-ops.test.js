@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { setStorageProvider } from '../src/storage/provider.js';
 import {
-  fileNew, fileOpenPath, fileSave,
+  fileNew, fileOpenPath, fileRefresh, fileSave,
   getCurrentFilePath, setCurrentFilePath,
   isDirty, markDirty, checkDirty,
 } from '../src/file-ops.js';
@@ -13,15 +14,13 @@ describe('file-ops', () => {
     document.body.innerHTML = '<textarea id="editor">existing content</textarea>';
     editor = document.getElementById('editor');
     refreshPreview = vi.fn();
-    // Reset module state
     setCurrentFilePath(null);
-    // Start clean by doing a fileNew
     fileNew(editor, refreshPreview);
     refreshPreview.mockClear();
   });
 
   afterEach(() => {
-    delete window.__TAURI__;
+    setStorageProvider(null);
   });
 
   describe('fileNew', () => {
@@ -57,13 +56,14 @@ describe('file-ops', () => {
   describe('fileOpenPath', () => {
     it('reads file content and sets editor value', async () => {
       const fakeContent = '# Hello from file';
-      window.__TAURI__ = {
-        fs: { readTextFile: vi.fn().mockResolvedValue(fakeContent) },
+      const mockProvider = {
+        readFile: vi.fn().mockResolvedValue(fakeContent),
       };
+      setStorageProvider(mockProvider);
 
       await fileOpenPath('/home/user/doc.md', editor, refreshPreview);
 
-      expect(window.__TAURI__.fs.readTextFile).toHaveBeenCalledWith('/home/user/doc.md');
+      expect(mockProvider.readFile).toHaveBeenCalledWith('/home/user/doc.md');
       expect(editor.value).toBe(fakeContent);
       expect(getCurrentFilePath()).toBe('/home/user/doc.md');
       expect(document.title).toBe('doc.md — UpDown');
@@ -71,16 +71,17 @@ describe('file-ops', () => {
     });
 
     it('marks file as clean after opening', async () => {
-      window.__TAURI__ = {
-        fs: { readTextFile: vi.fn().mockResolvedValue('content') },
+      const mockProvider = {
+        readFile: vi.fn().mockResolvedValue('content'),
       };
+      setStorageProvider(mockProvider);
       markDirty();
       await fileOpenPath('/home/user/doc.md', editor, refreshPreview);
       expect(isDirty()).toBe(false);
     });
 
-    it('does nothing when __TAURI__ is not available', async () => {
-      delete window.__TAURI__;
+    it('does nothing when no storage provider', async () => {
+      setStorageProvider(null);
       editor.value = 'original';
       await fileOpenPath('/some/file.md', editor, refreshPreview);
       expect(editor.value).toBe('original');
@@ -88,17 +89,48 @@ describe('file-ops', () => {
     });
   });
 
+  describe('fileRefresh', () => {
+    it('reloads current file from disk and updates editor', async () => {
+      const diskContent = '# Reloaded from disk';
+      const mockProvider = {
+        readFile: vi.fn().mockResolvedValue(diskContent),
+      };
+      setStorageProvider(mockProvider);
+      await fileOpenPath('/path/doc.md', editor, refreshPreview);
+      refreshPreview.mockClear();
+      editor.value = 'local unsaved changes';
+
+      await fileRefresh(editor, refreshPreview);
+
+      expect(mockProvider.readFile).toHaveBeenCalledWith('/path/doc.md');
+      expect(editor.value).toBe(diskContent);
+      expect(refreshPreview).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows error when no file is open', async () => {
+      setStorageProvider({ readFile: vi.fn() });
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      fileNew(editor, refreshPreview);
+
+      await fileRefresh(editor, refreshPreview);
+
+      expect(alertSpy).toHaveBeenCalledWith('No file open to refresh.');
+      alertSpy.mockRestore();
+    });
+  });
+
   describe('fileSave', () => {
     it('writes file and marks clean', async () => {
-      const writeTextFile = vi.fn().mockResolvedValue(undefined);
-      window.__TAURI__ = { fs: { writeTextFile } };
+      const writeFile = vi.fn().mockResolvedValue(undefined);
+      const mockProvider = { writeFile };
+      setStorageProvider(mockProvider);
       setCurrentFilePath('/path/to/file.md');
       editor.value = 'new content';
       markDirty();
 
       await fileSave(editor);
 
-      expect(writeTextFile).toHaveBeenCalledWith('/path/to/file.md', 'new content');
+      expect(writeFile).toHaveBeenCalledWith('/path/to/file.md', 'new content');
       expect(isDirty()).toBe(false);
       expect(document.title).toBe('file.md — UpDown');
     });
@@ -117,9 +149,7 @@ describe('file-ops', () => {
 
     it('title shows * when dirty with a file path', () => {
       setCurrentFilePath('/path/doc.md');
-      // force title update by calling markDirty then checking title
       markDirty();
-      // markDirty calls updateTitle which uses currentFilePath
       expect(document.title).toContain('*');
       expect(document.title).toBe('doc.md * — UpDown');
     });
@@ -130,13 +160,13 @@ describe('file-ops', () => {
     });
 
     it('checkDirty detects change from saved content', () => {
-      fileNew(editor, refreshPreview); // savedContent = ''
+      fileNew(editor, refreshPreview);
       checkDirty('modified');
       expect(isDirty()).toBe(true);
     });
 
     it('checkDirty marks clean when content matches saved', () => {
-      fileNew(editor, refreshPreview); // savedContent = ''
+      fileNew(editor, refreshPreview);
       checkDirty('changed');
       expect(isDirty()).toBe(true);
       checkDirty('');

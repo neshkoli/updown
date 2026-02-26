@@ -1,12 +1,14 @@
 {
   "name": "updown",
   "private": true,
-  "version": "2.0.3",
+  "version": "2.1.0",
   "type": "module",
   "scripts": {
     "tauri": "tauri",
     "test": "vitest run",
-    "build:ql": "./scripts/build-qlgenerator.sh"
+    "build:ql": "./scripts/build-qlgenerator.sh",
+    "build:web": "vite build",
+    "dev:web": "vite"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.0",
@@ -14,6 +16,7 @@
     "lucide-static": "^0.563.0",
     "markdown-it": "^14.1.0",
     "mermaid": "^11.12.3",
+    "vite": "^5.4.21",
     "vitest": "^2.1.6"
   },
   "dependencies": {

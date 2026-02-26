@@ -48,6 +48,23 @@ Then open UpDown normally from Applications. You only need to do this once.
 - [Rust](https://www.rust-lang.org/tools/install) toolchain
 - Tauri CLI: `npm install -g @tauri-apps/cli`
 
+## Web Version
+
+UpDown can also run as a static web app with Google Drive support:
+
+```bash
+# Build for web (output: dist/)
+npm run build:web
+
+# Run web dev server
+npm run dev:web
+```
+
+- **Guest mode**: Edit markdown and see live preview without signing in (no save).
+- **Signed in (Google)**: Browse, open, and save files in Google Drive.
+
+See [docs/WEB_DEPLOYMENT.md](docs/WEB_DEPLOYMENT.md) for deployment and Google Cloud setup.
+
 ## Getting Started
 
 ```bash

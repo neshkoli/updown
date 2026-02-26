@@ -4,16 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UpDown</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/markdown.css">
-    <script src="/lib/markdown-it.min.js"></script>
-    <script src="/lib/mermaid.min.js"></script>
-    <script type="module" src="/main.js" defer></script>
+    <link rel="icon" type="image/png" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/markdown.css">
+    <script type="module" src="/src/main-web.js" defer></script>
   </head>
   <body>
     <div id="app">
       <!-- Toolbar -->
       <header class="toolbar">
+        <!-- App icon (web only) -->
+        <div class="toolbar-app-icon" id="app-icon-group">
+          <img src="/img/icon.png" alt="UpDown" class="toolbar-icon-img" draggable="false">
+        </div>
+
+        <div class="toolbar-separator"></div>
+
         <!-- Panel toggle -->
         <div class="toolbar-group">
           <button type="button" class="toolbar-btn" data-action="toggleFolder" title="Toggle folder panel">
@@ -37,9 +43,6 @@
           <button type="button" class="toolbar-btn" data-action="saveAs" title="Save As">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
           </button>
-          <button type="button" class="toolbar-btn" data-action="refresh" title="Reload from disk">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-          </button>
         </div>
 
         <div class="toolbar-separator"></div>
@@ -59,7 +62,7 @@
 
         <div class="toolbar-separator zoom-separator"></div>
 
-        <!-- Zoom controls (visible in preview and split modes) -->
+        <!-- Zoom controls -->
         <div class="toolbar-group zoom-buttons">
           <button type="button" class="toolbar-btn" data-action="zoomOut" title="Zoom out (−10%)">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
@@ -72,7 +75,7 @@
 
         <div class="toolbar-separator md-separator"></div>
 
-        <!-- Markdown formatting (visible when editor is shown) -->
+        <!-- Markdown formatting -->
         <div class="toolbar-group md-buttons">
           <button type="button" class="toolbar-btn" data-md="bold" title="Bold">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"/></svg>
@@ -114,11 +117,21 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
           </button>
         </div>
+
+        <!-- Spacer pushes sign-in to the far right -->
+        <div class="toolbar-spacer"></div>
+
+        <!-- Sign in / Account (web only) -->
+        <div class="toolbar-group" id="auth-group">
+          <button type="button" class="toolbar-btn toolbar-btn-auth" id="sign-in-btn" title="Sign in with Google">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+            <span class="auth-label">Sign in</span>
+          </button>
+        </div>
       </header>
 
-      <!-- Main content with optional folder panel -->
+      <!-- Main content -->
       <main class="main-content">
-        <!-- Folder panel (left side) -->
         <aside id="folder-panel" class="folder-panel">
           <div class="folder-path" title=""></div>
           <div id="folder-list" class="folder-list"></div>
@@ -135,10 +148,8 @@
         </div>
       </main>
 
-      <!-- Link URL status bar (like browser status bar) -->
       <div id="link-status" class="link-status"></div>
 
-      <!-- About dialog -->
       <div id="about-overlay" class="about-overlay hidden">
         <div class="about-dialog">
           <img src="/img/icon.png" alt="UpDown" class="about-icon" draggable="false">

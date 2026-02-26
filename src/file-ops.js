@@ -1,7 +1,9 @@
 /**
  * File operations for UpDown.
- * Uses Tauri global APIs (window.__TAURI__) when available, falls back to no-ops.
+ * Uses the storage provider abstraction (Tauri, Google Drive, or guest).
  */
+
+import { getStorageProvider, hasStorageCapability } from './storage/provider.js';
 
 let currentFilePath = null;
 let dirty = false;
@@ -69,7 +71,7 @@ export function checkDirty(content) {
 }
 
 /**
- * Extract filename from a full path.
+ * Extract filename from a path or id.
  * @param {string} path
  * @returns {string}
  */
@@ -98,56 +100,64 @@ function showError(message) {
   console.error(message);
   if (window.__TAURI__?.dialog?.message) {
     window.__TAURI__.dialog.message(message, { title: 'UpDown — Error', kind: 'error' });
+  } else {
+    alert(message);
   }
 }
 
 /**
- * Open a file by its absolute path. Shared by dialog-open and drag-drop.
- * @param {string} path
+ * Reload the current file from disk (discard in-memory changes).
  * @param {HTMLTextAreaElement} editor
  * @param {function} refreshPreview
  */
-export async function fileOpenPath(path, editor, refreshPreview) {
-  if (!window.__TAURI__) return;
+export async function fileRefresh(editor, refreshPreview) {
+  if (!currentFilePath) {
+    showError('No file open to refresh.');
+    return;
+  }
+  await fileOpenPath(currentFilePath, editor, refreshPreview);
+}
+
+/**
+ * Open a file by its id (path for Tauri, fileId for Drive).
+ * @param {string} fileId
+ * @param {HTMLTextAreaElement} editor
+ * @param {function} refreshPreview
+ */
+export async function fileOpenPath(fileId, editor, refreshPreview) {
+  const provider = getStorageProvider();
+  if (!provider?.readFile) return;
 
   try {
-    const { readTextFile } = window.__TAURI__.fs;
-    const content = await readTextFile(path);
+    const content = await provider.readFile(fileId);
     editor.value = content;
-    currentFilePath = path;
+    currentFilePath = fileId;
     markClean(content);
     refreshPreview();
 
-    // Record in recent files (updates the native "Open Recent" menu).
-    window.__TAURI__.core.invoke('add_recent_file', { path }).catch(() => {});
+    // Record in recent files (Tauri native "Open Recent" menu)
+    if (window.__TAURI__?.core?.invoke) {
+      window.__TAURI__.core.invoke('add_recent_file', { path: fileId }).catch(() => {});
+    }
   } catch (err) {
     showError(`Failed to open file: ${err.message || err}`);
   }
 }
 
 /**
- * Open file: show dialog, read file, set editor content.
+ * Open file: show dialog (or picker), read file, set editor content.
  * @param {HTMLTextAreaElement} editor
  * @param {function} refreshPreview
  */
 export async function fileOpen(editor, refreshPreview) {
-  if (!window.__TAURI__) return;
+  const provider = getStorageProvider();
+  if (!provider?.showOpenDialog) return;
 
   try {
-    const { open } = window.__TAURI__.dialog;
+    const fileId = await provider.showOpenDialog();
+    if (!fileId) return;
 
-    const selected = await open({
-      title: 'Open Markdown',
-      filters: [
-        { name: 'Markdown', extensions: ['md', 'markdown'] },
-        { name: 'All files', extensions: ['*'] },
-      ],
-      multiple: false,
-    });
-
-    if (!selected) return; // user cancelled
-
-    await fileOpenPath(selected, editor, refreshPreview);
+    await fileOpenPath(fileId, editor, refreshPreview);
   } catch (err) {
     showError(`Failed to open file: ${err.message || err}`);
   }
@@ -159,10 +169,10 @@ export async function fileOpen(editor, refreshPreview) {
  */
 export async function fileSave(editor) {
   if (currentFilePath) {
-    if (!window.__TAURI__) return;
+    const provider = getStorageProvider();
+    if (!provider?.writeFile) return;
     try {
-      const { writeTextFile } = window.__TAURI__.fs;
-      await writeTextFile(currentFilePath, editor.value);
+      await provider.writeFile(currentFilePath, editor.value);
       markClean(editor.value);
     } catch (err) {
       showError(`Failed to save file: ${err.message || err}`);
@@ -177,25 +187,22 @@ export async function fileSave(editor) {
  * @param {HTMLTextAreaElement} editor
  */
 export async function fileSaveAs(editor) {
-  if (!window.__TAURI__) return;
+  const provider = getStorageProvider();
+  if (!provider?.showSaveDialog) return;
 
   try {
-    const { save } = window.__TAURI__.dialog;
-    const { writeTextFile } = window.__TAURI__.fs;
+    const defaultName = currentFilePath ? basename(currentFilePath) : 'untitled.md';
+    const result = await provider.showSaveDialog(defaultName);
+    if (!result) return;
 
-    const path = await save({
-      title: 'Save Markdown',
-      filters: [
-        { name: 'Markdown', extensions: ['md', 'markdown'] },
-        { name: 'All files', extensions: ['*'] },
-      ],
-      defaultPath: currentFilePath || 'untitled.md',
-    });
-
-    if (!path) return; // user cancelled
-
-    await writeTextFile(path, editor.value);
-    currentFilePath = path;
+    let fileId;
+    if (result.fileId) {
+      await provider.writeFile(result.fileId, editor.value);
+      fileId = result.fileId;
+    } else {
+      fileId = await provider.createFile(result.parentId, result.name, editor.value);
+    }
+    currentFilePath = fileId;
     markClean(editor.value);
   } catch (err) {
     showError(`Failed to save file: ${err.message || err}`);
