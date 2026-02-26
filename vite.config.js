@@ -4,6 +4,8 @@ import { resolve } from 'path';
 export default defineConfig({
   root: '.',
   publicDir: 'src',
+  // Set base to repo name so asset paths resolve correctly on GitHub Pages
+  base: process.env.GITHUB_PAGES ? '/updown/' : '/',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
