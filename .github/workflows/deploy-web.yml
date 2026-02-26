@@ -35,6 +35,7 @@ jobs:
         run: npm run build:web
         env:
           GITHUB_PAGES: true
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
