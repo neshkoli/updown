@@ -156,10 +156,19 @@ export function createGDriveProvider(accessToken) {
       return data.id;
     },
 
-    async getFolderName(folderId) {
+    async getFolderPath(folderId) {
       if (!folderId || folderId === rootId) return 'My Drive';
-      const data = await api(`/${folderId}?fields=name`);
-      return data.name || folderId;
+      const names = [];
+      let current = folderId;
+      const MAX_DEPTH = 10;
+      let depth = 0;
+      while (current && current !== rootId && depth < MAX_DEPTH) {
+        const data = await api(`/${current}?fields=name,parents`);
+        names.unshift(data.name || current);
+        current = data.parents?.[0] || null;
+        depth++;
+      }
+      return 'My Drive / ' + names.join(' / ');
     },
 
     async getParentFolderId(fileId) {

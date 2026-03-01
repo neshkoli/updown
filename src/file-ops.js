@@ -6,6 +6,7 @@
 import { getStorageProvider, hasStorageCapability } from './storage/provider.js';
 
 let currentFilePath = null;
+let currentFileDisplayName = null; // human-readable name (set when Drive ID is used as path)
 let dirty = false;
 let savedContent = '';
 
@@ -15,6 +16,17 @@ export function getCurrentFilePath() {
 
 export function setCurrentFilePath(path) {
   currentFilePath = path;
+  currentFileDisplayName = null; // reset; caller may set via setCurrentFileName
+}
+
+/**
+ * Override the display name shown in the title bar.
+ * Useful when currentFilePath is an opaque ID (e.g. Google Drive file ID).
+ * @param {string|null} name
+ */
+export function setCurrentFileName(name) {
+  currentFileDisplayName = name || null;
+  updateTitle();
 }
 
 export function isDirty() {
@@ -25,7 +37,7 @@ export function isDirty() {
  * Update the window title bar, showing * when modified.
  */
 function updateTitle() {
-  const name = currentFilePath ? basename(currentFilePath) : 'Untitled';
+  const name = currentFileDisplayName || (currentFilePath ? basename(currentFilePath) : 'Untitled');
   const modifier = dirty ? ' *' : '';
   const title = `${name}${modifier} — UpDown`;
   document.title = title;
@@ -97,6 +109,7 @@ function basename(path) {
 export function fileNew(editor, refreshPreview) {
   editor.value = '';
   currentFilePath = null;
+  currentFileDisplayName = null;
   markClean('');
   refreshPreview();
 }

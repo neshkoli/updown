@@ -15,7 +15,7 @@ import { createGuestProvider } from './storage/guest-provider.js';
 import { createGDriveProvider, initGoogleAuth } from './storage/gdrive-provider.js';
 import { setupToolbar, setViewMode, getViewMode, setFileActionHandlers, setViewActionHandlers, setMdCommandHandler, onAction } from './editor-ui.js';
 import { setupLivePreview } from './render.js';
-import { fileNew, fileSave, fileOpenPath, getCurrentFilePath, setCurrentFilePath, checkDirty, markFileSaved } from './file-ops.js';
+import { fileNew, fileSave, fileOpenPath, getCurrentFilePath, setCurrentFilePath, setCurrentFileName, checkDirty, markFileSaved } from './file-ops.js';
 import { setupWebDragDrop } from './drag-drop.js';
 import { setupAutosave } from './autosave.js';
 import { setupFolderPanel, setupPanelResize, toggleFolderPanel, syncToFile, setEmptyStateMessage, getCurrentFolder, refreshFolder, navigateToFolder } from './folder-panel.js';
@@ -81,8 +81,9 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // Folder panel
-  const openFromPanel = async (fileId) => {
+  const openFromPanel = async (fileId, fileName) => {
     await fileOpenPath(fileId, editor, refreshPreview);
+    if (fileName) setCurrentFileName(fileName);
   };
 
   setupFolderPanel(openFromPanel, () => createNewFolder()).then(() => {
@@ -310,6 +311,7 @@ async function driveFileSaveAs(editor) {
   try {
     const fileId = await provider.createFile(parentId, finalName, editor.value);
     setCurrentFilePath(fileId);
+    setCurrentFileName(finalName);
     markFileSaved(editor.value);
     await syncToFile(fileId);
   } catch (err) {

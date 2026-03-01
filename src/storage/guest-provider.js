@@ -29,7 +29,7 @@ export function createGuestProvider() {
       throw new Error('Sign in to create folders');
     },
 
-    async getFolderName() {
+    async getFolderPath() {
       return '/';
     },
 

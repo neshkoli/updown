@@ -116,7 +116,7 @@ function renderList(listEl, entries, folderId, hasParent) {
       li.addEventListener('click', () => navigateTo(entry.id, listEl));
     } else {
       li.addEventListener('click', () => {
-        if (onFileSelect) onFileSelect(entry.id);
+        if (onFileSelect) onFileSelect(entry.id, entry.name);
         listEl.querySelectorAll('.folder-item').forEach(el => el.classList.remove('selected'));
         li.classList.add('selected');
       });
@@ -160,9 +160,9 @@ async function navigateTo(folderId, listEl) {
     pathEl.textContent = getDisplayPath(folderId);
     pathEl.title = folderId;
     const provider = getStorageProvider();
-    if (provider?.getFolderName) {
-      provider.getFolderName(folderId)
-        .then((name) => { if (name) { pathEl.textContent = name; } })
+    if (provider?.getFolderPath) {
+      provider.getFolderPath(folderId)
+        .then((path) => { if (path) { pathEl.textContent = path; } })
         .catch(() => {});
     }
   }

@@ -121,7 +121,7 @@ describe('folder-panel', () => {
 
       const fileItem = document.querySelector('.folder-file');
       fileItem.click();
-      expect(fileSelectCallback).toHaveBeenCalledWith('/home/user/test.md');
+      expect(fileSelectCallback).toHaveBeenCalledWith('/home/user/test.md', 'test.md');
     });
 
     it('navigates into a subfolder when clicked', async () => {

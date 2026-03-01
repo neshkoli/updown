@@ -58,11 +58,8 @@ export function createTauriProvider() {
       return path;
     },
 
-    async getFolderName(folderId) {
+    async getFolderPath(folderId) {
       if (!folderId) return '/';
-      const parts = folderId.replace(/\\/g, '/').replace(/\/$/, '').split('/');
-      const name = parts[parts.length - 1] || '/';
-      // Replace home prefix with ~
       const homeMatch = folderId.match(/^\/Users\/[^/]+$/);
       if (homeMatch) return '~';
       return folderId.replace(/^\/Users\/[^/]+/, '~');
