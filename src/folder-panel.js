@@ -153,11 +153,18 @@ async function navigateTo(folderId, listEl) {
   currentFolder = folderId;
   saveFolder(folderId);
 
-  // Update the folder path display
+  // Update the folder path display — show a fallback immediately,
+  // then resolve the human-readable name from the provider.
   const pathEl = listEl.parentElement?.querySelector('.folder-path');
   if (pathEl) {
     pathEl.textContent = getDisplayPath(folderId);
     pathEl.title = folderId;
+    const provider = getStorageProvider();
+    if (provider?.getFolderName) {
+      provider.getFolderName(folderId)
+        .then((name) => { if (name) { pathEl.textContent = name; } })
+        .catch(() => {});
+    }
   }
 
   const entries = await readDirectory(folderId);
