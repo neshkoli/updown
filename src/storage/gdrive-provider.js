@@ -164,11 +164,14 @@ export function createGDriveProvider(accessToken) {
       let depth = 0;
       while (current && current !== rootId && depth < MAX_DEPTH) {
         const data = await api(`/${current}?fields=name,parents`);
+        const parents = data.parents || [];
+        // Root folder has no parents — stop here without adding its name
+        if (parents.length === 0) break;
         names.unshift(data.name || current);
-        current = data.parents?.[0] || null;
+        current = parents[0];
         depth++;
       }
-      return 'My Drive / ' + names.join(' / ');
+      return names.length ? 'My Drive / ' + names.join(' / ') : 'My Drive';
     },
 
     async getParentFolderId(fileId) {
