@@ -18,7 +18,7 @@ import { setupLivePreview } from './render.js';
 import { fileNew, fileSave, getCurrentFilePath, setCurrentFilePath, checkDirty, markFileSaved } from './file-ops.js';
 import { setupWebDragDrop } from './drag-drop.js';
 import { setupAutosave } from './autosave.js';
-import { setupFolderPanel, setupPanelResize, toggleFolderPanel, syncToFile, setEmptyStateMessage, getCurrentFolder, refreshFolder } from './folder-panel.js';
+import { setupFolderPanel, setupPanelResize, toggleFolderPanel, syncToFile, setEmptyStateMessage, getCurrentFolder, refreshFolder, navigateToFolder } from './folder-panel.js';
 import { execMdCommand } from './md-commands.js';
 
 // Start with guest provider (edit + preview, no save)
@@ -279,7 +279,7 @@ async function driveFileSave(editor) {
   const currentPath = getCurrentFilePath();
   if (currentPath) {
     await fileSave(editor);
-    syncToFile(getCurrentFilePath());
+    await refreshFolder();
   } else {
     await driveFileSaveAs(editor);
   }
@@ -329,8 +329,8 @@ async function createNewFolder() {
 
   const parentId = getCurrentFolder() || await provider.getRootFolderId();
   try {
-    await provider.createFolder(parentId, name);
-    await refreshFolder();
+    const folderId = await provider.createFolder(parentId, name);
+    await navigateToFolder(folderId);
   } catch (err) {
     alert(`Failed to create folder: ${err.message || err}`);
   }

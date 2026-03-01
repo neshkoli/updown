@@ -168,7 +168,8 @@ async function navigateTo(folderId, listEl) {
 }
 
 /**
- * Navigate to the folder containing a specific file (sync on open).
+ * Navigate to the folder containing a specific file (sync on open/save).
+ * Always refreshes the listing even if already in the correct folder.
  * @param {string} fileId
  */
 export async function syncToFile(fileId) {
@@ -181,7 +182,18 @@ export async function syncToFile(fileId) {
   if (folderId === undefined || folderId === null) return;
 
   const listEl = document.getElementById('folder-list');
-  if (listEl && folderId !== currentFolder) {
+  if (listEl) {
+    await navigateTo(folderId, listEl);
+  }
+}
+
+/**
+ * Navigate to a specific folder by id (e.g. after creating a new folder).
+ * @param {string} folderId
+ */
+export async function navigateToFolder(folderId) {
+  const listEl = document.getElementById('folder-list');
+  if (listEl && folderId) {
     await navigateTo(folderId, listEl);
   }
 }
