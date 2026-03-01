@@ -10,7 +10,7 @@ import mermaid from 'mermaid';
 window.markdownit = markdownit;
 window.mermaid = mermaid;
 
-import { setStorageProvider } from './storage/provider.js';
+import { setStorageProvider, getStorageProvider } from './storage/provider.js';
 import { createGuestProvider } from './storage/guest-provider.js';
 import { createGDriveProvider, initGoogleAuth } from './storage/gdrive-provider.js';
 import { setupToolbar, setViewMode, getViewMode, setFileActionHandlers, setViewActionHandlers, setMdCommandHandler, onAction } from './editor-ui.js';
