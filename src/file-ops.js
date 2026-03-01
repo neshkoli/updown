@@ -49,6 +49,15 @@ function markClean(content) {
 }
 
 /**
+ * Externally mark the document as saved with the given content.
+ * Used by web-specific save flows that bypass fileSave/fileSaveAs.
+ * @param {string} content
+ */
+export function markFileSaved(content) {
+  markClean(content);
+}
+
+/**
  * Mark the document as dirty (has unsaved changes).
  */
 export function markDirty() {

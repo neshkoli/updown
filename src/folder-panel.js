@@ -195,6 +195,16 @@ export function getCurrentFolder() {
 }
 
 /**
+ * Refresh the current folder listing (e.g. after creating a file or folder).
+ */
+export async function refreshFolder() {
+  const listEl = document.getElementById('folder-list');
+  if (listEl && currentFolder) {
+    await navigateTo(currentFolder, listEl);
+  }
+}
+
+/**
  * Set a custom empty state message (e.g. "Sign in to browse files" for web guest).
  * @param {HTMLElement} listEl
  * @param {string} message
@@ -209,18 +219,37 @@ export function setEmptyStateMessage(listEl, message) {
 /**
  * Initialize the folder panel.
  * @param {function} fileSelectCallback - called with (fileId) when a file is clicked
+ * @param {function} [newFolderCallback] - optional, called when New Folder is requested
  */
-export async function setupFolderPanel(fileSelectCallback) {
+export async function setupFolderPanel(fileSelectCallback, newFolderCallback) {
   onFileSelect = fileSelectCallback;
 
   const panel = document.getElementById('folder-panel');
   const listEl = document.getElementById('folder-list');
   if (!panel || !listEl) return;
 
+  const provider = getStorageProvider();
+
+  // Show or hide the New Folder button based on provider capability
+  let newFolderBtn = panel.querySelector('.folder-new-folder-btn');
+  if (newFolderCallback && provider?.createFolder) {
+    if (!newFolderBtn) {
+      newFolderBtn = document.createElement('button');
+      newFolderBtn.className = 'folder-new-folder-btn';
+      newFolderBtn.title = 'New folder';
+      newFolderBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>`;
+      const pathEl = panel.querySelector('.folder-path');
+      if (pathEl) pathEl.after(newFolderBtn);
+    }
+    newFolderBtn.onclick = newFolderCallback;
+    newFolderBtn.style.display = '';
+  } else if (newFolderBtn) {
+    newFolderBtn.style.display = 'none';
+  }
+
   let initialFolder = getInitialFolder();
 
   // If provider has getRootFolderId, use it when no saved folder
-  const provider = getStorageProvider();
   if (provider?.getRootFolderId && !localStorage.getItem(STORAGE_KEY)) {
     try {
       const root = await provider.getRootFolderId();

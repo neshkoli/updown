@@ -138,6 +138,24 @@ export function createGDriveProvider(accessToken) {
       return data.id;
     },
 
+    async createFolder(parentId, name) {
+      const res = await fetch(`${DRIVE_API}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: [parentId || rootId],
+        }),
+      });
+      if (!res.ok) throw new Error(`Failed to create folder: ${res.status}`);
+      const data = await res.json();
+      return data.id;
+    },
+
     async getParentFolderId(fileId) {
       if (!fileId || fileId === rootId) return null;
       const data = await api(`/${fileId}?fields=parents`);

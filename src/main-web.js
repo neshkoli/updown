@@ -15,10 +15,10 @@ import { createGuestProvider } from './storage/guest-provider.js';
 import { createGDriveProvider, initGoogleAuth } from './storage/gdrive-provider.js';
 import { setupToolbar, setViewMode, getViewMode, setFileActionHandlers, setViewActionHandlers, setMdCommandHandler, onAction } from './editor-ui.js';
 import { setupLivePreview } from './render.js';
-import { fileNew, fileSave, getCurrentFilePath, setCurrentFilePath, checkDirty } from './file-ops.js';
+import { fileNew, fileSave, getCurrentFilePath, setCurrentFilePath, checkDirty, markFileSaved } from './file-ops.js';
 import { setupWebDragDrop } from './drag-drop.js';
 import { setupAutosave } from './autosave.js';
-import { setupFolderPanel, setupPanelResize, toggleFolderPanel, syncToFile, setEmptyStateMessage } from './folder-panel.js';
+import { setupFolderPanel, setupPanelResize, toggleFolderPanel, syncToFile, setEmptyStateMessage, getCurrentFolder, refreshFolder } from './folder-panel.js';
 import { execMdCommand } from './md-commands.js';
 
 // Start with guest provider (edit + preview, no save)
@@ -38,10 +38,25 @@ window.addEventListener('DOMContentLoaded', () => {
     new: () => fileNew(editor, refreshPreview),
     open: () => openLocalFile(editor, refreshPreview),
     save: async () => {
-      await fileSave(editor);
-      syncToFile(getCurrentFilePath());
+      const provider = getStorageProvider();
+      if (provider?.createFile) {
+        // Signed in to Drive: save to Drive (ask for name if new file)
+        await driveFileSave(editor);
+      } else {
+        // Guest: download
+        downloadMarkdown(editor, getCurrentFilePath());
+      }
     },
-    saveAs: () => downloadMarkdown(editor, getCurrentFilePath()),
+    saveAs: async () => {
+      const provider = getStorageProvider();
+      if (provider?.createFile) {
+        // Signed in to Drive: save as new Drive file
+        await driveFileSaveAs(editor);
+      } else {
+        // Guest: download
+        downloadMarkdown(editor, getCurrentFilePath());
+      }
+    },
   });
 
   // Wire view actions
@@ -70,7 +85,7 @@ window.addEventListener('DOMContentLoaded', () => {
     await fileOpenPath(fileId, editor, refreshPreview);
   };
 
-  setupFolderPanel(openFromPanel).then(() => {
+  setupFolderPanel(openFromPanel, () => createNewFolder()).then(() => {
     setEmptyStateMessage(document.getElementById('folder-list'), 'Sign in to browse files');
   });
   setupPanelResize();
@@ -108,14 +123,14 @@ function setupAuthButton(editor, refreshPreview, openFromPanel) {
       if (label) label.textContent = 'Sign out';
       btn.title = 'Sign out';
       localStorage.removeItem('updown-last-folder');
-      setupFolderPanel(openFromPanel);
+      setupFolderPanel(openFromPanel, () => createNewFolder());
     } else {
       sessionStorage.removeItem('updown-gdrive-token');
       setStorageProvider(createGuestProvider());
       if (label) label.textContent = 'Sign in';
       btn.title = 'Sign in with Google';
       localStorage.removeItem('updown-last-folder');
-      setupFolderPanel(openFromPanel).then(() => {
+      setupFolderPanel(openFromPanel, () => createNewFolder()).then(() => {
         setEmptyStateMessage(document.getElementById('folder-list'), 'Sign in to browse files');
       });
     }
@@ -203,6 +218,122 @@ function openLocalFile(editor, refreshPreview) {
   });
 
   input.click();
+}
+
+/**
+ * Show a modal dialog asking the user for a name.
+ * Returns the entered name, or null if cancelled.
+ * @param {string} [defaultName]
+ * @param {string} [title]
+ * @param {string} [okLabel]
+ * @returns {Promise<string|null>}
+ */
+function showFileNameDialog(defaultName = 'untitled.md', title = 'Save to Google Drive', okLabel = 'Save') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-dialog">
+        <h3 class="modal-title">${title}</h3>
+        <input type="text" class="modal-input" value="${defaultName.replace(/"/g, '&quot;')}" placeholder="name">
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel">Cancel</button>
+          <button class="modal-btn modal-btn-ok">${okLabel}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const input = overlay.querySelector('.modal-input');
+    // Pre-select the name portion without the .md extension
+    setTimeout(() => {
+      input.focus();
+      const dotIdx = input.value.lastIndexOf('.');
+      input.setSelectionRange(0, dotIdx > 0 ? dotIdx : input.value.length);
+    }, 0);
+
+    const finish = (value) => {
+      document.body.removeChild(overlay);
+      resolve(value);
+    };
+
+    overlay.querySelector('.modal-btn-ok').addEventListener('click', () => {
+      const name = input.value.trim();
+      finish(name || null);
+    });
+    overlay.querySelector('.modal-btn-cancel').addEventListener('click', () => finish(null));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(null); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { const name = input.value.trim(); finish(name || null); }
+      if (e.key === 'Escape') finish(null);
+    });
+  });
+}
+
+/**
+ * Save the current editor content to Google Drive.
+ * If the file already has a Drive ID, overwrites it.
+ * If new, asks for a filename and creates in the current folder.
+ * @param {HTMLTextAreaElement} editor
+ */
+async function driveFileSave(editor) {
+  const currentPath = getCurrentFilePath();
+  if (currentPath) {
+    await fileSave(editor);
+    syncToFile(getCurrentFilePath());
+  } else {
+    await driveFileSaveAs(editor);
+  }
+}
+
+/**
+ * Save the editor content as a new file in Google Drive.
+ * Always prompts for a filename.
+ * @param {HTMLTextAreaElement} editor
+ */
+async function driveFileSaveAs(editor) {
+  const provider = getStorageProvider();
+  if (!provider?.createFile) return;
+
+  const currentPath = getCurrentFilePath();
+  const baseName = currentPath
+    ? currentPath.replace(/^.*[\\/]/, '')
+    : 'untitled.md';
+  const defaultName = baseName.endsWith('.md') || baseName.endsWith('.markdown')
+    ? baseName : baseName + '.md';
+
+  const name = await showFileNameDialog(defaultName);
+  if (!name) return;
+
+  const finalName = name.endsWith('.md') || name.endsWith('.markdown') ? name : name + '.md';
+  const parentId = getCurrentFolder() || await provider.getRootFolderId();
+
+  try {
+    const fileId = await provider.createFile(parentId, finalName, editor.value);
+    setCurrentFilePath(fileId);
+    markFileSaved(editor.value);
+    await syncToFile(fileId);
+  } catch (err) {
+    alert(`Failed to save: ${err.message || err}`);
+  }
+}
+
+/**
+ * Prompt for a folder name and create it in the current folder on Google Drive.
+ */
+async function createNewFolder() {
+  const provider = getStorageProvider();
+  if (!provider?.createFolder) return;
+
+  const name = await showFileNameDialog('New Folder', 'New Folder', 'Create');
+  if (!name) return;
+
+  const parentId = getCurrentFolder() || await provider.getRootFolderId();
+  try {
+    await provider.createFolder(parentId, name);
+    await refreshFolder();
+  } catch (err) {
+    alert(`Failed to create folder: ${err.message || err}`);
+  }
 }
 
 /**

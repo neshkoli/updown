@@ -25,6 +25,10 @@ export function createGuestProvider() {
       throw new Error('Sign in to save files');
     },
 
+    async createFolder() {
+      throw new Error('Sign in to create folders');
+    },
+
     async getParentFolderId() {
       return null;
     },
