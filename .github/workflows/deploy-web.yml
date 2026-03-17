@@ -38,13 +38,21 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
       - name: Package Pages artifact
-        run: tar -czf github-pages.tar.gz -C dist .
+        run: |
+          tar \
+            --dereference --hard-dereference \
+            --directory dist \
+            -cvf "$RUNNER_TEMP/artifact.tar" \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=".[^/]*" \
+            .
 
       - name: Upload Pages artifact
         uses: actions/upload-artifact@v7.0.0
         with:
           name: github-pages
-          path: github-pages.tar.gz
+          path: ${{ runner.temp }}/artifact.tar
           retention-days: 1
 
   deploy:
