@@ -5,8 +5,8 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 export default defineConfig({
   root: '.',
   publicDir: 'src',
-  // Set base to repo name so asset paths resolve correctly on GitHub Pages
-  base: process.env.GITHUB_PAGES ? '/updown/' : '/',
+  // Custom domain (updown.eshkoli.com) serves from root, so base is always '/'
+  base: '/',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
