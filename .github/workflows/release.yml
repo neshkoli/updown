@@ -89,6 +89,6 @@ jobs:
           name: UpDown v${{ steps.version.outputs.version }}
           files: ${{ steps.dmg.outputs.path }}
           generate_release_notes: true
-          overwrite: true
+          overwrite_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
