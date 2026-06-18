@@ -1,5 +1,5 @@
 # Build and publish a GitHub Release when a version tag (v*) is pushed.
-# Produces a macOS .dmg that users can download and install.
+# Produces a macOS .dmg, uploads to JFrog Fly generic storage, and GitHub Releases.
 
 name: Release
 
@@ -7,6 +7,16 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version without v prefix (defaults to tauri.conf.json)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
 
 jobs:
   release-macos:
@@ -16,11 +26,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve release version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [[ "${GITHUB_REF_NAME}" == v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+
+      - name: Setup JFrog Fly
+        uses: jfrog/fly-action@v1
 
       - name: Install dependencies
         run: npm ci
@@ -41,10 +67,28 @@ jobs:
           echo "path=$DMG" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "$DMG")" >> "$GITHUB_OUTPUT"
 
+      - name: Upload DMG to JFrog Fly
+        id: fly-upload
+        uses: jfrog/fly-action/upload@v1
+        with:
+          name: updown
+          version: ${{ steps.version.outputs.version }}
+          files: ${{ steps.dmg.outputs.path }}
+
+      - name: Distribute DMG on JFrog Fly
+        uses: jfrog/fly-action/distribute@v1
+        with:
+          name: updown
+          version: ${{ steps.version.outputs.version }}
+          type: generic
+
       - name: Create GitHub Release and upload DMG
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: UpDown v${{ steps.version.outputs.version }}
           files: ${{ steps.dmg.outputs.path }}
-          generate_release_notes: false
+          generate_release_notes: true
+          overwrite: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
