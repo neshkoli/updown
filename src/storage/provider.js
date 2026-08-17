@@ -6,6 +6,7 @@
  * Provider interface:
  * - listDirectory(folderId) -> Promise<[{id, name, isDirectory}]>
  * - readFile(fileId) -> Promise<string>
+ * - readFileAsArrayBuffer?(fileId) -> Promise<ArrayBuffer> (e.g. PDF from Google Drive)
  * - writeFile(fileId, content) -> Promise<void>
  * - createFile(parentId, name, content) -> Promise<fileId>
  * - getParentFolderId(folderId) -> Promise<folderId|null>

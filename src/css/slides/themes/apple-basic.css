@@ -1,0 +1,23 @@
+/* @slidev/theme-apple-basic — clean Apple-like sans */
+.slides-theme-apple-basic .slidev-layout {
+  --slidev-theme-primary: #007aff;
+  --slidev-code-background: #f2f2f7;
+  --slidev-code-foreground: #1c1c1e;
+  --slidev-border-color: #c6c6c8;
+  background: #ffffff;
+  color: #1c1c1e;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.slides-theme-apple-basic .slidev-layout h1,
+.slides-theme-apple-basic .slidev-layout h2,
+.slides-theme-apple-basic .slidev-layout h3 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.slides-theme-apple-basic .slidev-layout.cover,
+.slides-theme-apple-basic .slidev-layout.intro {
+  background: #f2f2f7;
+}

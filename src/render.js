@@ -3,16 +3,13 @@
  * Uses the global `markdownit` from the UMD build loaded in index.html.
  */
 import { applyBidi } from './bidi.js';
+import { getDocumentKind } from './document-type.js';
+import { escapeHtml, extractFrontmatter } from './frontmatter.js';
+import { stripHtmlForPreview } from './markdown-sanitize.js';
+import { isPresentationDeck } from './presentation-detect.js';
+import { updatePresentationToolbar, getViewMode } from './editor-ui.js';
+import { updateSlidesView } from './slides-view.js';
 import { debounce } from './utils.js';
-
-/** Escape HTML special characters for safe insertion. */
-function escapeHtml(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 // Lazily initialized markdown-it instance.
 // Cannot be created at module-evaluation time because in the web build (ESM
@@ -32,7 +29,8 @@ function getMd() {
   }
 
   _md = MarkdownIt({
-    html: false,        // don't allow raw HTML in source
+    // Inline HTML is sanitized to <kbd> only before render (see markdown-sanitize.js).
+    html: true,
     linkify: true,      // auto-link URLs
     typographer: true,  // smart quotes, dashes
   });
@@ -93,72 +91,12 @@ function getMd() {
 }
 
 /**
- * Extract YAML frontmatter from markdown source.
- * Returns { metadata: [{key, value}] | null, body: string }.
- * Frontmatter must start on the first line with "---" and end with "---".
- * @param {string} source
- * @returns {{ metadata: Array<{key: string, value: string}> | null, body: string }}
- */
-export function extractFrontmatter(source) {
-  if (!source) return { metadata: null, body: source || '' };
-
-  const lines = source.split('\n');
-  if (lines.length < 3 || lines[0].trim() !== '---') {
-    return { metadata: null, body: source };
-  }
-
-  // Find closing ---
-  let closingIndex = -1;
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i].trim() === '---') {
-      closingIndex = i;
-      break;
-    }
-  }
-
-  if (closingIndex < 2) return { metadata: null, body: source };
-
-  const yamlLines = lines.slice(1, closingIndex);
-  const body = lines.slice(closingIndex + 1).join('\n');
-
-  // Parse simple YAML key: value pairs
-  const metadata = [];
-  for (const line of yamlLines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-
-    const colonIdx = trimmed.indexOf(':');
-    if (colonIdx > 0) {
-      const key = trimmed.slice(0, colonIdx).trim();
-      let value = trimmed.slice(colonIdx + 1).trim();
-
-      // Strip surrounding quotes
-      if ((value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-
-      if (key) {
-        metadata.push({ key, value });
-      }
-    } else if (trimmed.startsWith('- ') && metadata.length > 0) {
-      // List item — append to last key's value
-      const item = trimmed.slice(2);
-      const last = metadata[metadata.length - 1];
-      last.value = last.value ? last.value + ', ' + item : item;
-    }
-  }
-
-  return { metadata: metadata.length > 0 ? metadata : null, body };
-}
-
-/**
  * Render markdown source text to HTML string.
  * @param {string} source
  * @returns {string}
  */
 export function renderMarkdown(source) {
-  return getMd().render(source || '');
+  return getMd().render(stripHtmlForPreview(source || ''));
 }
 
 /**
@@ -174,6 +112,17 @@ export function setupLivePreview(editor, preview, delayMs = 150) {
   const metadataContent = document.getElementById('metadata-content');
 
   function update() {
+    if (getDocumentKind() === 'pdf') {
+      return;
+    }
+    const isDeck = isPresentationDeck(editor.value);
+    updatePresentationToolbar(document, isDeck);
+
+    if (getViewMode() === 'slides' && isDeck) {
+      updateSlidesView(editor.value);
+      return;
+    }
+
     const { metadata, body } = extractFrontmatter(editor.value);
 
     // Render body (without frontmatter) into preview
@@ -193,7 +142,8 @@ export function setupLivePreview(editor, preview, delayMs = 150) {
       metadataPanel.classList.remove('hidden');
       const rows = metadata.map(({ key, value }) => {
         const safeKey = escapeHtml(key);
-        const safeValue = value ? escapeHtml(value) : '<span style="color:#8b949e">(empty)</span>';
+        const displayValue = value === true ? 'true' : value === false ? 'false' : value;
+        const safeValue = displayValue ? escapeHtml(String(displayValue)) : '<span style="color:#8b949e">(empty)</span>';
         return `<tr><td class="meta-key">${safeKey}</td><td class="meta-value">${safeValue}</td></tr>`;
       }).join('');
       metadataContent.innerHTML = `<table>${rows}</table>`;
@@ -260,3 +210,5 @@ export function setupLivePreview(editor, preview, delayMs = 150) {
 
   return update;
 }
+
+export { extractFrontmatter } from './frontmatter.js';

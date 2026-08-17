@@ -2,13 +2,19 @@
 
 This document describes how to build and deploy the UpDown web app, and how to configure Google Drive integration.
 
+## Live site
+
+The production web app is hosted at **[updown.eshkoli.com](https://updown.eshkoli.com)**.
+
+Pushes to the `main` branch trigger an automatic deploy via `.github/workflows/deploy-web.yml` (GitHub Pages).
+
 ## Building the Web App
 
 ```bash
 npm run build:web
 ```
 
-This produces a static build in the `dist/` directory. The main entry point is `dist/web/index.html`.
+This produces a static build in the `dist/` directory. The entry point is `dist/index.html` (hoisted from `dist/web/index.html` during the build).
 
 ## Local Development
 
@@ -20,34 +26,30 @@ Starts the Vite dev server at http://localhost:5173.
 
 ## Deployment
 
-The web app is a static site. Deploy the contents of `dist/` to any static hosting service:
+### GitHub Pages (current setup)
 
-- **GitHub Pages**: Set the publish directory to `dist` (or `dist/web` if your host supports subdirectories)
-- **Netlify**: Deploy the `dist` folder; set the publish directory to `dist`
-- **Vercel**: Deploy the project; configure the output directory to `dist`
-- **Cloudflare Pages**: Deploy the `dist` folder
+1. **Repository Settings → Pages** — Source: **GitHub Actions**
+2. **Custom domain** — `updown.eshkoli.com` (configured in repo Settings → Pages; `src/CNAME` is copied into `dist/` on build)
+3. **Workflow** — `.github/workflows/deploy-web.yml` builds with `npm run build:web` and deploys `dist/` on every push to `main`
+4. **Secrets** — `VITE_GOOGLE_CLIENT_ID` must be set in repo secrets for Google sign-in in production
 
-### GitHub Pages Example
+### Base path
 
-1. In your repo, go to Settings → Pages
-2. Source: Deploy from a branch
-3. Branch: `main` (or your default)
-4. Folder: `/ (root)` and set the build output to `dist` if using a build step, or `/dist` for the built files
-
-### Base Path
-
-If deploying to a subpath (e.g. `https://example.com/updown/`), set the Vite `base` option in `vite.config.js`:
+The site uses a custom domain and is served from the site root. In `vite.config.js`:
 
 ```js
-export default defineConfig({
-  base: '/updown/',
-  // ...
-});
+base: '/',
 ```
+
+If you deploy to a subpath instead (e.g. `https://example.com/updown/`), set `base: '/updown/'`.
+
+### Other hosts
+
+Deploy the contents of `dist/` to any static host (Netlify, Vercel, Cloudflare Pages, etc.). Set `VITE_GOOGLE_CLIENT_ID` at build time and add your production origin to Google OAuth authorized JavaScript origins.
 
 ## Google Drive Integration
 
-To enable Google Drive (open, save, browse files), you must configure a Google Cloud project and OAuth credentials.
+To enable Google Drive (open, save, browse files), configure a Google Cloud project and OAuth credentials.
 
 ### 1. Create a Google Cloud Project
 
@@ -71,13 +73,12 @@ To enable Google Drive (open, save, browse files), you must configure a Google C
 3. Name: e.g. "UpDown Web"
 4. **Authorized JavaScript origins**:
    - `http://localhost:5173` (for development)
-   - `https://your-domain.com` (your production URL)
-5. **Authorized redirect URIs**: Add `https://your-domain.com` (or leave default for GSI)
-6. Copy the **Client ID**
+   - `https://updown.eshkoli.com` (production)
+5. Copy the **Client ID**
 
 ### 4. Configure the Client ID in the App
 
-**Option A: Build-time (recommended)**
+**Build-time (recommended)**
 
 Create a `.env` file in the project root (do not commit it):
 
@@ -87,7 +88,9 @@ VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 
 Rebuild: `npm run build:web`
 
-**Option B: Runtime**
+For CI, set `VITE_GOOGLE_CLIENT_ID` as a GitHub Actions repository secret.
+
+**Runtime alternative**
 
 Before the app loads, set the client ID on the window:
 
@@ -95,7 +98,6 @@ Before the app loads, set the client ID on the window:
 <script>
   window.__UPDOWN_GOOGLE_CLIENT_ID__ = 'your-client-id.apps.googleusercontent.com';
 </script>
-<script type="module" src="/src/main-web.js" defer></script>
 ```
 
 ### 5. Publish the App (Production)
@@ -107,6 +109,6 @@ If your app is in "Testing" mode, only added test users can sign in. To allow an
 
 ## Features
 
-- **Guest mode**: Edit markdown and see live preview without signing in. No save, no file browser.
-- **Signed in (Google)**: Full access to Google Drive: browse folders, open and save `.md` / `.markdown` files.
-- **Shared code**: The same editor, preview, and toolbar logic is used by both the Tauri desktop app and the web app.
+- **Guest mode** — Edit markdown, preview live, open local files (drag-and-drop or file picker). No cloud save.
+- **Signed in (Google)** — Browse folders, open and save `.md` / `.markdown` files, create folders in Drive.
+- **Shared code** — Same editor, slides, find/replace, Mermaid, and print as the Tauri desktop app.

@@ -13,13 +13,27 @@ window.mermaid = mermaid;
 import { setStorageProvider, getStorageProvider } from './storage/provider.js';
 import { createGuestProvider } from './storage/guest-provider.js';
 import { createGDriveProvider, initGoogleAuth } from './storage/gdrive-provider.js';
-import { setupToolbar, setViewMode, getViewMode, setFileActionHandlers, setViewActionHandlers, setMdCommandHandler, onAction } from './editor-ui.js';
+import { setupToolbar, setViewMode, getViewMode, setFileActionHandlers, setViewActionHandlers, setMdCommandHandler, onAction, resetPreviewZoom } from './editor-ui.js';
 import { setupLivePreview } from './render.js';
-import { fileNew, fileSave, fileOpenPath, getCurrentFilePath, setCurrentFilePath, setCurrentFileName, checkDirty, markFileSaved } from './file-ops.js';
+import {
+  fileNew,
+  fileSave,
+  fileOpenPath,
+  fileOpenPdfFile,
+  getCurrentFilePath,
+  setCurrentFilePath,
+  setCurrentFileName,
+  checkDirty,
+  markFileSaved,
+  resetToMarkdownView,
+} from './file-ops.js';
 import { setupWebDragDrop } from './drag-drop.js';
 import { setupAutosave } from './autosave.js';
 import { setupFolderPanel, setupPanelResize, toggleFolderPanel, syncToFile, setEmptyStateMessage, getCurrentFolder, refreshFolder, navigateToFolder } from './folder-panel.js';
 import { execMdCommand } from './md-commands.js';
+import { setupFindReplace, openFind, openFindReplace } from './find-replace-ui.js';
+import { printFormattedDocument } from './print.js';
+import { initSlidesView, activateSlidesView, hideSlidesViewer } from './slides-view.js';
 
 // Start with guest provider (edit + preview, no save)
 setStorageProvider(createGuestProvider());
@@ -32,6 +46,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if (editor && preview) {
     refreshPreview = setupLivePreview(editor, preview);
   }
+
+  initSlidesView();
 
   // Wire file actions to file-ops module
   setFileActionHandlers({
@@ -65,6 +81,13 @@ window.addEventListener('DOMContentLoaded', () => {
     viewSource: () => setViewMode(document, 'source'),
     viewPreview: () => setViewMode(document, 'preview'),
     viewSplit: () => setViewMode(document, 'split'),
+    activateSlides: () => {
+      if (editor) activateSlidesView(editor.value);
+    },
+    deactivateSlides: () => hideSlidesViewer(),
+    find: openFind,
+    findReplace: openFindReplace,
+    print: () => printFormattedDocument(document, { refreshPreview }),
     installQuickLook: () => {}, // No-op on web
     about: showAboutDialog,
   });
@@ -73,7 +96,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setMdCommandHandler((command) => execMdCommand(editor, command));
 
   setupToolbar(document);
-  setViewMode(document, getViewMode() || 'split');
+  setViewMode(document, getViewMode() || 'preview');
 
   // Autosave on edit (1.5s debounce)
   if (editor) {
@@ -82,14 +105,39 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Folder panel
   const openFromPanel = async (fileId, fileName) => {
-    await fileOpenPath(fileId, editor, refreshPreview);
-    if (fileName) setCurrentFileName(fileName);
+    await fileOpenPath(fileId, editor, refreshPreview, { displayName: fileName });
   };
 
   setupFolderPanel(openFromPanel, () => createNewFolder()).then(() => {
     setEmptyStateMessage(document.getElementById('folder-list'), 'Sign in to browse files');
+    const panel = document.getElementById('folder-panel');
+    if (panel) panel.classList.add('hidden');
   });
   setupPanelResize();
+
+  // Find / Replace bar (visible in source and split mode)
+  setupFindReplace(document, () => document.getElementById('editor'));
+
+  // Keyboard: ⌘0 / Ctrl+0 = preview/PDF zoom 100%; ⌘F = Find; ⌘⌥F / Ctrl+H = Replace
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === '0' && !e.altKey) {
+      e.preventDefault();
+      resetPreviewZoom(document);
+      return;
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'f' && !e.altKey) {
+      e.preventDefault();
+      openFind();
+    }
+    if ((e.metaKey && e.altKey && e.key === 'f') || (e.ctrlKey && e.key === 'h')) {
+      e.preventDefault();
+      openFindReplace();
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
+      e.preventDefault();
+      printFormattedDocument(document, { refreshPreview });
+    }
+  });
 
   // HTML5 drag-and-drop to open local .md files
   setupWebDragDrop(editor, refreshPreview, (filename) => {
@@ -198,7 +246,7 @@ document.addEventListener('click', (e) => {
 function openLocalFile(editor, refreshPreview) {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = '.md,.markdown,text/markdown,text/x-markdown';
+  input.accept = '.md,.markdown,.pdf,text/markdown,text/x-markdown,application/pdf';
   input.style.display = 'none';
   document.body.appendChild(input);
 
@@ -207,15 +255,24 @@ function openLocalFile(editor, refreshPreview) {
     document.body.removeChild(input);
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      editor.value = e.target.result;
-      setCurrentFilePath(file.name);
-      checkDirty(editor.value);
-      refreshPreview();
-    };
-    reader.onerror = () => console.error('Failed to read file:', file.name);
-    reader.readAsText(file);
+    if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
+      fileOpenPdfFile(file, editor, refreshPreview);
+    } else {
+      resetToMarkdownView();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        editor.value = e.target.result;
+        setCurrentFilePath(file.name);
+        checkDirty(editor.value);
+        refreshPreview();
+      };
+      reader.onerror = () => console.error('Failed to read file:', file.name);
+      reader.readAsText(file);
+      return;
+    }
+
+    setCurrentFilePath(file.name);
+    checkDirty(editor.value);
   });
 
   input.click();

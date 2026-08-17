@@ -88,21 +88,107 @@ html, body {
   display: none;
 }
 
+/* PDF: only preview mode — hide source and split toggles */
+.document-pdf .view-btn[data-mode="source"],
+.document-pdf .view-btn[data-mode="split"] {
+  display: none;
+}
+
 /* Zoom level label */
 .zoom-level {
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   color: #666;
-  min-width: 3ch;
+  min-width: 3.25ch;
   text-align: center;
   user-select: none;
   -webkit-app-region: no-drag;
+}
+
+.toolbar-btn.zoom-reset-btn {
+  padding: 4px 6px;
+}
+
+.toolbar-btn.zoom-reset-btn:disabled {
+  opacity: 0.45;
 }
 
 /* Markdown formatting buttons — hidden in preview-only mode */
 .view-mode-preview .md-buttons,
 .view-mode-preview .md-separator {
   display: none;
+}
+
+/* Find bar — hidden in preview mode */
+.view-mode-preview .find-replace-bar {
+  display: none;
+}
+
+/* Find / Replace bar */
+.find-replace-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 10px 8px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
+}
+
+.find-replace-bar.hidden {
+  display: none;
+}
+
+.find-replace-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.find-input {
+  width: 200px;
+  max-width: 280px;
+  padding: 4px 8px;
+  font-size: 0.875rem;
+  font-family: ui-monospace, monospace;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+}
+
+.find-input:focus {
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+}
+
+.find-btn {
+  padding: 4px 8px;
+  font-size: 0.875rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.find-btn:hover {
+  background: #e8e8e8;
+}
+
+.find-close-btn {
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 2px 8px;
+}
+
+.find-btn-text {
+  min-width: 4em;
+}
+
+.find-replace-replace-row .find-input.replace-input {
+  width: 200px;
+  max-width: 280px;
 }
 
 /* Main content area */
@@ -130,6 +216,7 @@ html, body {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .preview {
@@ -142,6 +229,49 @@ html, body {
   color: #333;
   font-size: calc(0.9rem * var(--preview-zoom, 1));
   line-height: 1.5;
+}
+
+.preview.preview-hidden-for-pdf {
+  display: none !important;
+}
+
+.pdf-viewer-wrap {
+  --preview-zoom: 1;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #525659;
+  overflow: hidden;
+}
+
+.pdf-viewer-wrap.hidden {
+  display: none !important;
+}
+
+/* Scroll viewport; inner block scales like markdown preview zoom */
+.pdf-viewer-zoom-outer {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pdf-viewer-zoom-inner {
+  transform: scale(var(--preview-zoom, 1));
+  transform-origin: top left;
+  width: calc(100% / var(--preview-zoom, 1));
+  min-height: calc(100% / var(--preview-zoom, 1));
+}
+
+.pdf-viewer-frame {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  border: none;
+  background: #525659;
+  vertical-align: top;
 }
 
 /* Metadata panel (frontmatter) */
@@ -216,6 +346,14 @@ html, body {
   display: none;
 }
 .view-mode-preview .preview-container {
+  display: flex;
+}
+
+/* View mode: Slides — same layout as preview */
+.view-mode-slides .editor {
+  display: none;
+}
+.view-mode-slides .preview-container {
   display: flex;
 }
 
@@ -610,4 +748,69 @@ html, body {
 
 .auth-label {
   white-space: nowrap;
+}
+
+/* Print fallback: show only formatted preview or PDF in the main window */
+@media print {
+  body.printing-markdown .toolbar,
+  body.printing-markdown .find-replace-bar,
+  body.printing-markdown .folder-panel,
+  body.printing-markdown .editor,
+  body.printing-markdown .link-status,
+  body.printing-markdown .about-overlay,
+  body.printing-markdown .metadata-panel,
+  body.printing-markdown #pdf-viewer-wrap {
+    display: none !important;
+  }
+
+  body.printing-markdown #app,
+  body.printing-markdown .main-content,
+  body.printing-markdown .preview-container {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body.printing-markdown .preview {
+    display: block !important;
+    overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    --preview-zoom: 1;
+    font-size: 0.9rem !important;
+    background: #fff !important;
+  }
+
+  body.printing-pdf .toolbar,
+  body.printing-pdf .find-replace-bar,
+  body.printing-pdf .folder-panel,
+  body.printing-pdf .editor,
+  body.printing-pdf .link-status,
+  body.printing-pdf .about-overlay,
+  body.printing-pdf .metadata-panel,
+  body.printing-pdf .preview {
+    display: none !important;
+  }
+
+  body.printing-pdf #app,
+  body.printing-pdf .main-content,
+  body.printing-pdf .preview-container,
+  body.printing-pdf #pdf-viewer-wrap {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body.printing-pdf .pdf-viewer-zoom-outer,
+  body.printing-pdf .pdf-viewer-zoom-inner {
+    transform: none !important;
+    width: 100% !important;
+    min-height: auto !important;
+  }
+
+  body.printing-pdf .pdf-viewer-frame {
+    width: 100% !important;
+    height: 100vh !important;
+    border: none !important;
+  }
 }

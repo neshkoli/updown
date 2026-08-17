@@ -31,7 +31,7 @@ export function createTauriProvider() {
           })
           .filter((entry) => {
             if (entry.isDirectory) return !entry.name.startsWith('.');
-            return /\.(md|markdown)$/i.test(entry.name);
+            return /\.(md|markdown|pdf)$/i.test(entry.name);
           })
           .sort((a, b) => {
             if (a.isDirectory && !b.isDirectory) return -1;
@@ -74,9 +74,10 @@ export function createTauriProvider() {
 
     async showOpenDialog() {
       const selected = await open({
-        title: 'Open Markdown',
+        title: 'Open file',
         filters: [
           { name: 'Markdown', extensions: ['md', 'markdown'] },
+          { name: 'PDF', extensions: ['pdf'] },
           { name: 'All files', extensions: ['*'] },
         ],
         multiple: false,

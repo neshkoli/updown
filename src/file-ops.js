@@ -3,7 +3,16 @@
  * Uses the storage provider abstraction (Tauri, Google Drive, or guest).
  */
 
-import { getStorageProvider, hasStorageCapability } from './storage/provider.js';
+import { setViewMode } from './editor-ui.js';
+import { getDocumentKind, setDocumentKind, shouldOpenAsPdf } from './document-type.js';
+import { getStorageProvider } from './storage/provider.js';
+import {
+  hidePdfViewer,
+  reloadPdfViewer,
+  showPdfForPath,
+  showPdfFromArrayBuffer,
+  showPdfFromFile,
+} from './pdf-view.js';
 
 let currentFilePath = null;
 let currentFileDisplayName = null; // human-readable name (set when Drive ID is used as path)
@@ -101,12 +110,23 @@ function basename(path) {
   return path.replace(/.*[\\/]/, '');
 }
 
+/** True for absolute/Windows paths; false for opaque ids (e.g. Google Drive file id). */
+function isLikelyFilesystemPath(fileId) {
+  return (
+    fileId.includes('/') ||
+    fileId.includes('\\') ||
+    /^[A-Za-z]:[\\/]/.test(fileId)
+  );
+}
+
 /**
  * New file: clear editor, reset path and title.
  * @param {HTMLTextAreaElement} editor
  * @param {function} refreshPreview - re-render the preview
  */
 export function fileNew(editor, refreshPreview) {
+  hidePdfViewer();
+  setDocumentKind('markdown');
   editor.value = '';
   currentFilePath = null;
   currentFileDisplayName = null;
@@ -137,6 +157,22 @@ export async function fileRefresh(editor, refreshPreview) {
     showError('No file open to refresh.');
     return;
   }
+  if (getDocumentKind() === 'pdf') {
+    const provider = getStorageProvider();
+    if (provider?.readFileAsArrayBuffer && !window.__TAURI__) {
+      try {
+        const buf = await provider.readFileAsArrayBuffer(currentFilePath);
+        if (!showPdfFromArrayBuffer(buf)) {
+          showError('Failed to reload PDF.');
+        }
+      } catch (err) {
+        showError(`Failed to reload PDF: ${err.message || err}`);
+      }
+      return;
+    }
+    reloadPdfViewer();
+    return;
+  }
   await fileOpenPath(currentFilePath, editor, refreshPreview);
 }
 
@@ -145,19 +181,73 @@ export async function fileRefresh(editor, refreshPreview) {
  * @param {string} fileId
  * @param {HTMLTextAreaElement} editor
  * @param {function} refreshPreview
+ * @param {{ displayName?: string }} [options] - Drive file name when fileId is opaque (for PDF detection and title)
  */
-export async function fileOpenPath(fileId, editor, refreshPreview) {
+export async function fileOpenPath(fileId, editor, refreshPreview, options = {}) {
+  const displayName = options.displayName;
+
+  if (shouldOpenAsPdf(fileId, displayName)) {
+    hidePdfViewer();
+    setDocumentKind('pdf');
+    editor.value = '';
+    currentFilePath = fileId;
+    if (Object.prototype.hasOwnProperty.call(options, 'displayName')) {
+      setCurrentFileName(displayName || null);
+    } else if (isLikelyFilesystemPath(fileId)) {
+      setCurrentFileName(null);
+    }
+    markClean('');
+
+    let ok = false;
+    if (window.__TAURI__) {
+      ok = showPdfForPath(fileId);
+    } else {
+      const provider = getStorageProvider();
+      if (provider?.readFileAsArrayBuffer) {
+        try {
+          const buf = await provider.readFileAsArrayBuffer(fileId);
+          ok = showPdfFromArrayBuffer(buf);
+        } catch (err) {
+          showError(`Failed to open PDF: ${err.message || err}`);
+        }
+      } else {
+        showError('PDF is not available for this storage.');
+      }
+    }
+
+    if (!ok) {
+      currentFilePath = null;
+      currentFileDisplayName = null;
+      setDocumentKind('markdown');
+      hidePdfViewer();
+      return;
+    }
+    setViewMode(document, 'preview');
+    refreshPreview();
+
+    if (window.__TAURI__?.core?.invoke) {
+      window.__TAURI__.core.invoke('add_recent_file', { path: fileId }).catch(() => {});
+    }
+    return;
+  }
+
   const provider = getStorageProvider();
   if (!provider?.readFile) return;
 
   try {
+    hidePdfViewer();
+    setDocumentKind('markdown');
     const content = await provider.readFile(fileId);
     editor.value = content;
     currentFilePath = fileId;
+    if (Object.prototype.hasOwnProperty.call(options, 'displayName')) {
+      setCurrentFileName(displayName || null);
+    } else if (isLikelyFilesystemPath(fileId)) {
+      setCurrentFileName(null);
+    }
     markClean(content);
     refreshPreview();
 
-    // Record in recent files (Tauri native "Open Recent" menu)
     if (window.__TAURI__?.core?.invoke) {
       window.__TAURI__.core.invoke('add_recent_file', { path: fileId }).catch(() => {});
     }
@@ -190,6 +280,9 @@ export async function fileOpen(editor, refreshPreview) {
  * @param {HTMLTextAreaElement} editor
  */
 export async function fileSave(editor) {
+  if (getDocumentKind() === 'pdf') {
+    return;
+  }
   if (currentFilePath) {
     const provider = getStorageProvider();
     if (!provider?.writeFile) return;
@@ -204,11 +297,40 @@ export async function fileSave(editor) {
   }
 }
 
+/** Leave PDF mode and tear down the iframe (e.g. before loading markdown from web drop). */
+export function resetToMarkdownView() {
+  hidePdfViewer();
+  setDocumentKind('markdown');
+}
+
 /**
- * Save As: show dialog, write file, update path and title.
+ * Open a PDF from a browser File (web drag-and-drop).
+ * @param {File} file
  * @param {HTMLTextAreaElement} editor
+ * @param {function} refreshPreview
  */
+export function fileOpenPdfFile(file, editor, refreshPreview) {
+  hidePdfViewer();
+  setDocumentKind('pdf');
+  editor.value = '';
+  currentFilePath = file.name;
+  setCurrentFileName(null);
+  markClean('');
+  const ok = showPdfFromFile(file);
+  if (!ok) {
+    currentFilePath = null;
+    setDocumentKind('markdown');
+    hidePdfViewer();
+    return;
+  }
+  setViewMode(document, 'preview');
+  refreshPreview();
+}
+
 export async function fileSaveAs(editor) {
+  if (getDocumentKind() === 'pdf') {
+    return;
+  }
   const provider = getStorageProvider();
   if (!provider?.showSaveDialog) return;
 

@@ -1,0 +1,31 @@
+/* @slidev/theme-bricks — bold block accents */
+.slides-theme-bricks .slidev-layout {
+  --slidev-theme-primary: #e63946;
+  --slidev-code-background: #1d3557;
+  --slidev-code-foreground: #f1faee;
+  --slidev-border-color: #457b9d;
+  background: #f1faee;
+  color: #1d3557;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+.slides-theme-bricks .slidev-layout h1,
+.slides-theme-bricks .slidev-layout h2,
+.slides-theme-bricks .slidev-layout h3 {
+  color: #e63946;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.slides-theme-bricks .slidev-layout.cover,
+.slides-theme-bricks .slidev-layout.intro {
+  background: #1d3557;
+  color: #f1faee;
+}
+
+.slides-theme-bricks .slidev-layout.cover h1,
+.slides-theme-bricks .slidev-layout.cover h2,
+.slides-theme-bricks .slidev-layout.intro h1,
+.slides-theme-bricks .slidev-layout.intro h2 {
+  color: #e63946;
+}

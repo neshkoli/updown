@@ -122,6 +122,15 @@ fn get_opened_file(state: tauri::State<PendingFile>) -> Option<String> {
     state.0.lock().unwrap().take()
 }
 
+/// Open the native print dialog for the main webview (requires `core:webview:allow-print`).
+#[tauri::command]
+fn print_webview(app: tauri::AppHandle) -> Result<(), String> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "Main window not found".to_string())?;
+    window.print().map_err(|e| e.to_string())
+}
+
 /// Install the Quick Look generator for markdown preview in Finder.
 #[tauri::command]
 fn install_quicklook_plugin(app: tauri::AppHandle) -> Result<String, String> {
@@ -230,7 +239,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_opened_file,
             install_quicklook_plugin,
-            add_recent_file
+            add_recent_file,
+            print_webview
         ])
         .setup(|app| {
             // Load persisted recent files and seed state.
@@ -254,6 +264,7 @@ pub fn run() {
             let open_item = MenuItem::with_id(app, "open", "Open…", true, Some("CmdOrCtrl+O"))?;
             let save_item = MenuItem::with_id(app, "save", "Save", true, Some("CmdOrCtrl+S"))?;
             let save_as_item = MenuItem::with_id(app, "save_as", "Save As…", true, Some("CmdOrCtrl+Shift+S"))?;
+            let print_item = MenuItem::with_id(app, "print", "Print…", true, Some("CmdOrCtrl+P"))?;
             let install_ql_item = MenuItem::with_id(app, "install_quicklook", "Install Quick Look Plugin…", true, None::<&str>)?;
 
             // Build the "Open Recent" submenu.
@@ -280,12 +291,16 @@ pub fn run() {
                 .item(&save_item)
                 .item(&save_as_item)
                 .separator()
+                .item(&print_item)
+                .separator()
                 .item(&install_ql_item)
                 .separator()
                 .item(&PredefinedMenuItem::close_window(app, None::<&str>)?)
                 .build()?;
 
             // ── Edit menu ─────────────────────────────────────────────────────
+            let find_item = MenuItem::with_id(app, "find", "Find…", true, Some("CmdOrCtrl+F"))?;
+            let find_replace_item = MenuItem::with_id(app, "find_replace", "Find and Replace…", true, Some("CmdOrCtrl+Shift+H"))?;
             let edit_menu = SubmenuBuilder::new(app, "Edit")
                 .item(&PredefinedMenuItem::undo(app, None::<&str>)?)
                 .item(&PredefinedMenuItem::redo(app, None::<&str>)?)
@@ -294,6 +309,9 @@ pub fn run() {
                 .item(&PredefinedMenuItem::copy(app, None::<&str>)?)
                 .item(&PredefinedMenuItem::paste(app, None::<&str>)?)
                 .item(&PredefinedMenuItem::select_all(app, None::<&str>)?)
+                .separator()
+                .item(&find_item)
+                .item(&find_replace_item)
                 .build()?;
 
             // ── View menu ─────────────────────────────────────────────────────
@@ -327,6 +345,21 @@ pub fn run() {
                 .build()?;
 
             app.set_menu(menu)?;
+
+            if let Some(window) = app.get_webview_window("main") {
+                let w = window.clone();
+                window.on_window_event(move |event| {
+                    use tauri::WindowEvent;
+                    if matches!(event, WindowEvent::Resized(_) | WindowEvent::Focused(_)) {
+                        let fs = w.is_fullscreen().unwrap_or(false);
+                        let js = format!(
+                            "window.__onWindowFullscreenChange && window.__onWindowFullscreenChange({fs})"
+                        );
+                        let _ = w.eval(&js);
+                    }
+                });
+            }
+
             Ok(())
         })
         .on_menu_event(|app, event| {
@@ -365,13 +398,24 @@ pub fn run() {
                         }
                     }
                 }
-                "open" | "save" | "save_as" | "toggle_folder"
+                "find" | "find_replace" => {
+                    if let Some(w) = app.get_webview_window("main") {
+                        let action = if id == "find" { "find" } else { "findReplace" };
+                        let js = format!(
+                            "window.__menuAction && window.__menuAction('{}')",
+                            action
+                        );
+                        let _ = w.eval(&js);
+                    }
+                }
+                "open" | "save" | "save_as" | "print" | "toggle_folder"
                 | "view_source" | "view_preview" | "view_split" => {
                     if let Some(w) = app.get_webview_window("main") {
                         let action = match id {
                             "open" => "open",
                             "save" => "save",
                             "save_as" => "saveAs",
+                            "print" => "print",
                             "toggle_folder" => "toggleFolder",
                             "view_source" => "viewSource",
                             "view_preview" => "viewPreview",

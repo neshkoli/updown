@@ -15,7 +15,7 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 jobs:
@@ -44,9 +44,6 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-
-      - name: Setup JFrog Fly
-        uses: jfrog/fly-action@v1
 
       - name: Install dependencies
         run: npm ci

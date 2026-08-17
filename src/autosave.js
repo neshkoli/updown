@@ -2,6 +2,7 @@
  * Autosave module for UpDown.
  * Debounced save on editor input when a file is already associated.
  */
+import { getDocumentKind } from './document-type.js';
 import { getCurrentFilePath, checkDirty, fileSave } from './file-ops.js';
 import { debounce } from './utils.js';
 
@@ -18,6 +19,9 @@ export function setupAutosave(editor, delayMs = 1500) {
   }, delayMs);
 
   function onInput() {
+    if (getDocumentKind() === 'pdf') {
+      return;
+    }
     checkDirty(editor.value);
     if (getCurrentFilePath()) {
       debouncedSave();

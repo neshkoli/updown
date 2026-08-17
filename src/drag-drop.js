@@ -5,6 +5,8 @@
  *  - Web:   uses HTML5 File API (reads file content via FileReader)
  */
 
+import { fileOpenPdfFile, resetToMarkdownView } from './file-ops.js';
+
 /**
  * Read a File object as text.
  * @param {File} file
@@ -22,7 +24,7 @@ function readFileAsText(file) {
 /**
  * Set up HTML5 drag-and-drop for the web (no Tauri).
  * Shows a visual overlay when hovering over the app, loads the first
- * .md / .markdown file dropped.
+ * .md / .markdown / .pdf file dropped.
  * @param {HTMLTextAreaElement} editor
  * @param {function} refreshPreview
  * @param {function} onAfterLoad - optional callback(filename) after file loads
@@ -33,7 +35,7 @@ export function setupWebDragDrop(editor, refreshPreview, onAfterLoad) {
 
   const overlay = document.createElement('div');
   overlay.id = 'drop-overlay';
-  overlay.innerHTML = '<span>Drop markdown file here</span>';
+  overlay.innerHTML = '<span>Drop a file here</span>';
   app.appendChild(overlay);
 
   let dragCounter = 0;
@@ -62,13 +64,21 @@ export function setupWebDragDrop(editor, refreshPreview, onAfterLoad) {
     overlay.classList.remove('visible');
 
     const files = Array.from(e.dataTransfer?.files || []);
-    const mdFile = files.find(f => /\.(md|markdown)$/i.test(f.name)) || files[0];
+    const mdFile =
+      files.find(f => /\.pdf$/i.test(f.name)) ||
+      files.find(f => /\.(md|markdown)$/i.test(f.name)) ||
+      files[0];
     if (!mdFile) return;
 
     try {
-      const content = await readFileAsText(mdFile);
-      editor.value = content;
-      refreshPreview();
+      if (/\.pdf$/i.test(mdFile.name)) {
+        fileOpenPdfFile(mdFile, editor, refreshPreview);
+      } else {
+        resetToMarkdownView();
+        const content = await readFileAsText(mdFile);
+        editor.value = content;
+        refreshPreview();
+      }
       if (onAfterLoad) onAfterLoad(mdFile.name);
     } catch (err) {
       console.error('Failed to open dropped file:', err);
@@ -78,7 +88,7 @@ export function setupWebDragDrop(editor, refreshPreview, onAfterLoad) {
 
 /**
  * Set up drag-and-drop file opening (Tauri desktop).
- * Shows a visual overlay when hovering, opens the first .md file on drop.
+ * Shows a visual overlay when hovering, opens the first .md / .pdf (or first path) on drop.
  * @param {HTMLTextAreaElement} editor
  * @param {function} refreshPreview
  * @param {function} fileOpenPath - (path, editor, refreshPreview) => Promise
@@ -93,7 +103,7 @@ export function setupDragDrop(editor, refreshPreview, fileOpenPath, onAfterOpen)
   // Create the drop overlay element
   const overlay = document.createElement('div');
   overlay.id = 'drop-overlay';
-  overlay.innerHTML = '<span>Drop markdown file here</span>';
+  overlay.innerHTML = '<span>Drop a file here</span>';
   app.appendChild(overlay);
 
   const { getCurrentWebview } = window.__TAURI__.webview;
@@ -107,8 +117,10 @@ export function setupDragDrop(editor, refreshPreview, fileOpenPath, onAfterOpen)
     } else if (type === 'drop') {
       overlay.classList.remove('visible');
       const paths = event.payload.paths || [];
-      // Open the first markdown-like file (or just the first file)
-      const mdFile = paths.find(p => /\.(md|markdown)$/i.test(p)) || paths[0];
+      const mdFile =
+        paths.find(p => /\.pdf$/i.test(p)) ||
+        paths.find(p => /\.(md|markdown)$/i.test(p)) ||
+        paths[0];
       if (mdFile) {
         fileOpenPath(mdFile, editor, refreshPreview).then(() => {
           if (onAfterOpen) onAfterOpen(mdFile);

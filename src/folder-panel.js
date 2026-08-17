@@ -128,7 +128,7 @@ function renderList(listEl, entries, folderId, hasParent) {
   if (entries.length === 0 && !hasParent) {
     const empty = document.createElement('div');
     empty.className = 'folder-empty';
-    empty.textContent = 'No markdown files';
+    empty.textContent = 'No markdown or PDF files';
     listEl.appendChild(empty);
   }
 }

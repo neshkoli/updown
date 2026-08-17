@@ -1,0 +1,183 @@
+/* JFrog brand theme — navy background, green accent, branded typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Open+Sans:wght@600;700&display=swap');
+
+.slides-theme-jfrog .slidev-layout {
+  --slidev-theme-primary: #40BE46;
+  --slidev-jfrog-navy: #05192d;
+  --slidev-jfrog-navy-mid: #0a1f35;
+  --slidev-jfrog-navy-header: #0d243a;
+  --slidev-jfrog-green: #40BE46;
+  --slidev-jfrog-green-light: #6fcf97;
+  --slidev-code-background: #0d243a;
+  --slidev-code-foreground: #e6edf3;
+  --slidev-border-color: #2a3f54;
+
+  background: linear-gradient(165deg, var(--slidev-jfrog-navy) 0%, var(--slidev-jfrog-navy-mid) 45%, var(--slidev-jfrog-navy) 100%);
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings — Open Sans bold for titles, JFrog green */
+.slides-theme-jfrog .slidev-layout h1,
+.slides-theme-jfrog .slidev-layout h2,
+.slides-theme-jfrog .slidev-layout h3,
+.slides-theme-jfrog .slidev-layout h4,
+.slides-theme-jfrog .slidev-layout h5 {
+  font-family: 'Open Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--slidev-jfrog-green);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.slides-theme-jfrog .slidev-layout h1 {
+  font-size: 2.5rem;
+  line-height: 1.15;
+  margin-bottom: 1.25rem;
+}
+
+.slides-theme-jfrog .slidev-layout h2 {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.slides-theme-jfrog .slidev-layout h6 {
+  color: var(--slidev-jfrog-green-light);
+  opacity: 0.85;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+
+/* Body text */
+.slides-theme-jfrog .slidev-layout p {
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.6;
+}
+
+.slides-theme-jfrog .slidev-layout p strong,
+.slides-theme-jfrog .slidev-layout li strong {
+  color: var(--slidev-jfrog-green);
+  font-weight: 600;
+}
+
+/* Links */
+.slides-theme-jfrog .slidev-layout a {
+  color: var(--slidev-jfrog-green-light);
+  border-bottom-color: var(--slidev-jfrog-green-light);
+}
+
+.slides-theme-jfrog .slidev-layout a:hover {
+  color: var(--slidev-jfrog-green);
+  border-bottom-color: var(--slidev-jfrog-green);
+}
+
+/* Lists */
+.slides-theme-jfrog .slidev-layout li::marker {
+  color: var(--slidev-jfrog-green);
+}
+
+.slides-theme-jfrog .slidev-layout li {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* Blockquotes */
+.slides-theme-jfrog .slidev-layout blockquote {
+  background: var(--slidev-jfrog-navy-header);
+  color: var(--slidev-code-foreground);
+  border-left-color: var(--slidev-jfrog-green);
+  border-radius: 0.25rem;
+}
+
+/* Code blocks */
+.slides-theme-jfrog .slidev-layout pre {
+  background: var(--slidev-jfrog-navy-header);
+  border: 1px solid var(--slidev-border-color);
+}
+
+.slides-theme-jfrog .slidev-layout code {
+  color: var(--slidev-jfrog-green-light);
+}
+
+.slides-theme-jfrog .slidev-layout pre code {
+  color: var(--slidev-code-foreground);
+}
+
+/* Tables — branded header band, green accents, subtle row dividers */
+.slides-theme-jfrog .slidev-layout table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 1rem;
+}
+
+.slides-theme-jfrog .slidev-layout thead {
+  background: var(--slidev-jfrog-navy-header);
+}
+
+.slides-theme-jfrog .slidev-layout thead tr {
+  border-bottom: 2px solid var(--slidev-jfrog-green);
+}
+
+.slides-theme-jfrog .slidev-layout th {
+  color: var(--slidev-jfrog-green);
+  font-family: 'Open Sans', 'Inter', sans-serif;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border: none;
+}
+
+.slides-theme-jfrog .slidev-layout tbody tr {
+  border-bottom: 1px solid var(--slidev-border-color);
+}
+
+.slides-theme-jfrog .slidev-layout tbody tr:last-child {
+  border-bottom: none;
+}
+
+.slides-theme-jfrog .slidev-layout td {
+  color: #ffffff;
+  padding: 0.75rem 1rem;
+  border: none;
+  vertical-align: top;
+}
+
+.slides-theme-jfrog .slidev-layout kbd {
+  background: var(--slidev-jfrog-navy-header);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+/* Tables without explicit thead (fallback for first-row headers) */
+.slides-theme-jfrog .slidev-layout table:not(:has(thead)) tr:first-child th,
+.slides-theme-jfrog .slidev-layout table:not(:has(thead)) tr:first-child td {
+  background: var(--slidev-jfrog-navy-header);
+  color: var(--slidev-jfrog-green);
+  font-weight: 600;
+  border-bottom: 2px solid var(--slidev-jfrog-green);
+}
+
+.slides-theme-jfrog .slidev-layout table:not(:has(thead)) tr:not(:first-child) {
+  border-bottom: 1px solid var(--slidev-border-color);
+}
+
+/* Cover / intro slides */
+.slides-theme-jfrog .slidev-layout.cover,
+.slides-theme-jfrog .slidev-layout.intro {
+  background: linear-gradient(160deg, var(--slidev-jfrog-navy) 0%, var(--slidev-jfrog-navy-mid) 55%, #0C1D37 100%);
+}
+
+.slides-theme-jfrog .slidev-layout.cover h1,
+.slides-theme-jfrog .slidev-layout.intro h1 {
+  color: var(--slidev-jfrog-green);
+  font-size: 3.75rem;
+}
+
+.slides-theme-jfrog .slidev-layout.cover h1 + p,
+.slides-theme-jfrog .slidev-layout.intro h1 + p {
+  color: rgba(255, 255, 255, 0.6);
+  opacity: 1;
+}

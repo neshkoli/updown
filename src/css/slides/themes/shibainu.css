@@ -1,0 +1,21 @@
+/* @slidev/theme-shibainu — warm playful tones */
+.slides-theme-shibainu .slidev-layout {
+  --slidev-theme-primary: #e07a5f;
+  --slidev-code-background: #fef3e2;
+  --slidev-code-foreground: #3d405b;
+  --slidev-border-color: #f2cc8f;
+  background: #fff8f0;
+  color: #3d405b;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.slides-theme-shibainu .slidev-layout h1,
+.slides-theme-shibainu .slidev-layout h2,
+.slides-theme-shibainu .slidev-layout h3 {
+  color: #e07a5f;
+}
+
+.slides-theme-shibainu .slidev-layout.cover,
+.slides-theme-shibainu .slidev-layout.intro {
+  background: linear-gradient(160deg, #fef3e2 0%, #fff8f0 50%, #f4a26133 100%);
+}

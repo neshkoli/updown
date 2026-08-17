@@ -8,6 +8,7 @@ vi.mock('../src/file-ops.js', () => ({
 }));
 
 const { getCurrentFilePath, checkDirty, fileSave } = await import('../src/file-ops.js');
+const { setDocumentKind } = await import('../src/document-type.js');
 const { setupAutosave } = await import('../src/autosave.js');
 
 describe('autosave', () => {
@@ -17,6 +18,7 @@ describe('autosave', () => {
     vi.useFakeTimers();
     document.body.innerHTML = '<textarea id="editor"></textarea>';
     editor = document.getElementById('editor');
+    setDocumentKind('markdown');
     vi.clearAllMocks();
   });
 
@@ -93,5 +95,18 @@ describe('autosave', () => {
 
     vi.advanceTimersByTime(600);
     expect(fileSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not autosave or checkDirty when document is PDF', () => {
+    getCurrentFilePath.mockReturnValue('/path/to/file.pdf');
+    setDocumentKind('pdf');
+    setupAutosave(editor, 500);
+
+    editor.value = 'hello';
+    editor.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(600);
+
+    expect(checkDirty).not.toHaveBeenCalled();
+    expect(fileSave).not.toHaveBeenCalled();
   });
 });

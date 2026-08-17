@@ -45,7 +45,7 @@ describe('drag-drop', () => {
     setupDragDrop(editor, refreshPreview, fileOpenPath);
     const overlay = document.getElementById('drop-overlay');
     expect(overlay).toBeTruthy();
-    expect(overlay.textContent).toContain('Drop markdown file here');
+    expect(overlay.textContent).toContain('Drop a file here');
   });
 
   it('registers an onDragDropEvent handler', () => {
@@ -74,6 +74,19 @@ describe('drag-drop', () => {
 
     expect(overlay.classList.contains('visible')).toBe(false);
     expect(fileOpenPath).toHaveBeenCalledWith('/Users/me/notes.md', editor, refreshPreview);
+  });
+
+  it('prefers .pdf when both md and pdf are dropped', () => {
+    setupDragDrop(editor, refreshPreview, fileOpenPath);
+
+    dragDropHandler({
+      payload: {
+        type: 'drop',
+        paths: ['/Users/me/readme.md', '/Users/me/doc.pdf'],
+      },
+    });
+
+    expect(fileOpenPath).toHaveBeenCalledWith('/Users/me/doc.pdf', editor, refreshPreview);
   });
 
   it('prefers .md file when multiple files are dropped', () => {

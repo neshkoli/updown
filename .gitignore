@@ -36,3 +36,8 @@ src-tauri/resources/UpDownQuickLook.app/
 *.njsproj
 *.sln
 *.sw?
+.fly/
+
+# Legacy Wails build artifacts (desktop app uses Tauri)
+build/
+frontend/

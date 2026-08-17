@@ -1,0 +1,21 @@
+/* @slidev/theme-default — light, cyan primary */
+.slides-theme-default .slidev-layout {
+  --slidev-theme-primary: #3ab9d5;
+  --slidev-code-background: #f6f8fa;
+  --slidev-code-foreground: #24292f;
+  --slidev-border-color: #d0d7de;
+  background: #ffffff;
+  color: #24292f;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.slides-theme-default .slidev-layout h1,
+.slides-theme-default .slidev-layout h2,
+.slides-theme-default .slidev-layout h3 {
+  color: #24292f;
+}
+
+.slides-theme-default .slidev-layout.cover,
+.slides-theme-default .slidev-layout.intro {
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+}

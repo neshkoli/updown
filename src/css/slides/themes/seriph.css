@@ -1,0 +1,22 @@
+/* @slidev/theme-seriph — serif, muted teal */
+.slides-theme-seriph .slidev-layout {
+  --slidev-theme-primary: #5d8392;
+  --slidev-code-background: #f5f0eb;
+  --slidev-code-foreground: #2c3e50;
+  --slidev-border-color: #d4c4b0;
+  background: #faf8f5;
+  color: #2c3e50;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+.slides-theme-seriph .slidev-layout h1,
+.slides-theme-seriph .slidev-layout h2,
+.slides-theme-seriph .slidev-layout h3 {
+  color: #5d8392;
+  font-weight: 400;
+}
+
+.slides-theme-seriph .slidev-layout.cover h1,
+.slides-theme-seriph .slidev-layout.intro h1 {
+  font-weight: 300;
+}

@@ -7,12 +7,15 @@ A lightweight, cross-platform Markdown viewer and editor built with [Tauri 2](ht
 ## Features
 
 - **Three view modes** — Source, Preview, and Split (side-by-side)
+- **Slide presentations** — Marp/Slidev-style decks with `---` separators, themes (including JFrog), keyboard navigation, and fullscreen present mode
 - **Markdown toolbar** — Bold, Italic, H1/H2/H3, Link, Image, Lists, Blockquote, Code Block, Horizontal Rule, Table
-- **Live preview** — Rendered output updates as you type (debounced)
+- **Live preview** — Rendered output updates as you type (debounced), with Mermaid diagram support
+- **Find & Replace** — In-editor search with replace and replace-all (⌘F / ⌘⌥F)
 - **Bidirectional text** — Paragraphs with predominantly Hebrew characters automatically align right-to-left; otherwise left-to-right
 - **Folder panel** — Browsable sidebar listing markdown files and folders, with drag-to-resize and persistent state
-- **File operations** — New, Open, Save, Save As via toolbar or native dialogs
-- **Drag and drop** — Drop `.md` files onto the window to open them
+- **File operations** — New, Open, Save, Save As via toolbar or native dialogs; open PDFs alongside markdown
+- **Drag and drop** — Drop `.md` or `.pdf` files onto the window to open them
+- **Print** — Print formatted preview (⌘P)
 - **Autosave** — Automatically saves changes after a short idle period (when a file is open)
 - **Dirty indicator** — Window title shows `*` when there are unsaved changes
 - **Quick Look** — Press Space on any `.md` file in Finder to see a formatted preview (macOS; installs via menu or first-run prompt)
@@ -50,7 +53,7 @@ Then open UpDown normally from Applications. You only need to do this once.
 
 ## Web Version
 
-UpDown can also run as a static web app with Google Drive support:
+UpDown also runs as a static web app at **[updown.eshkoli.com](https://updown.eshkoli.com)**.
 
 ```bash
 # Build for web (output: dist/)
@@ -60,10 +63,11 @@ npm run build:web
 npm run dev:web
 ```
 
-- **Guest mode**: Edit markdown and see live preview without signing in (no save).
-- **Signed in (Google)**: Browse, open, and save files in Google Drive.
+- **Guest mode** — Edit markdown, preview live, open local files via drag-and-drop or file picker (no cloud save).
+- **Signed in (Google)** — Browse, open, save, and create folders in Google Drive.
+- **Same editor** — Toolbar, slides, find/replace, Mermaid, and print work in the browser too.
 
-See [docs/WEB_DEPLOYMENT.md](docs/WEB_DEPLOYMENT.md) for deployment and Google Cloud setup.
+Pushes to `main` deploy automatically to GitHub Pages via `.github/workflows/deploy-web.yml`. See [docs/WEB_DEPLOYMENT.md](docs/WEB_DEPLOYMENT.md) for custom-domain setup and Google Cloud configuration.
 
 ## Getting Started
 
@@ -165,7 +169,7 @@ Developed by [neshkoli](https://github.com/neshkoli)
 
 GitHub: [https://github.com/neshkoli/updown](https://github.com/neshkoli/updown)
 
-Landing page: [neshkoli.github.io/updown](https://neshkoli.github.io/updown/) (GitHub Pages)
+Web app: [updown.eshkoli.com](https://updown.eshkoli.com) · Landing page: [neshkoli.github.io/updown](https://neshkoli.github.io/updown/)
 
 ## License
 

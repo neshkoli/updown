@@ -69,7 +69,8 @@ export function createGDriveProvider(accessToken) {
         }))
         .filter((f) => {
           if (f.isDirectory) return !f.name.startsWith('.');
-          return /\.(md|markdown)$/i.test(f.name);
+          if (/\.(md|markdown|pdf)$/i.test(f.name)) return true;
+          return f.mimeType === 'application/pdf';
         })
         .sort((a, b) => {
           if (a.isDirectory && !b.isDirectory) return -1;
@@ -80,6 +81,15 @@ export function createGDriveProvider(accessToken) {
 
     async readFile(fileId) {
       return apiBinary(`/${fileId}?alt=media`);
+    },
+
+    async readFileAsArrayBuffer(fileId) {
+      const url = `${DRIVE_API}/${fileId}?alt=media`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error(`Drive API error: ${res.status}`);
+      return res.arrayBuffer();
     },
 
     async writeFile(fileId, content) {

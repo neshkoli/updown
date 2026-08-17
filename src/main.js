@@ -4,13 +4,18 @@
  */
 import { setStorageProvider } from './storage/provider.js';
 import { createTauriProvider } from './storage/tauri-provider.js';
-import { setupToolbar, setViewMode, getViewMode, setFileActionHandlers, setViewActionHandlers, setMdCommandHandler, onAction } from './editor-ui.js';
+import { setupToolbar, setViewMode, getViewMode, setFileActionHandlers, setViewActionHandlers, setMdCommandHandler, onAction, resetPreviewZoom } from './editor-ui.js';
 import { setupLivePreview } from './render.js';
 import { fileNew, fileOpen, fileOpenPath, fileRefresh, fileSave, fileSaveAs, getCurrentFilePath } from './file-ops.js';
 import { setupDragDrop } from './drag-drop.js';
 import { setupAutosave } from './autosave.js';
 import { setupFolderPanel, setupPanelResize, toggleFolderPanel, syncToFile } from './folder-panel.js';
 import { execMdCommand } from './md-commands.js';
+import { setupFindReplace, openFind, openFindReplace } from './find-replace-ui.js';
+import { printFormattedDocument } from './print.js';
+import { initSlidesView, activateSlidesView, hideSlidesViewer, onWindowFullscreenChange } from './slides-view.js';
+
+window.__onWindowFullscreenChange = onWindowFullscreenChange;
 
 window.addEventListener('DOMContentLoaded', () => {
   // Set storage provider for Tauri (local file system)
@@ -25,6 +30,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if (editor && preview) {
     refreshPreview = setupLivePreview(editor, preview);
   }
+
+  initSlidesView();
 
   // Wire file actions to file-ops module
   setFileActionHandlers({
@@ -53,6 +60,13 @@ window.addEventListener('DOMContentLoaded', () => {
     viewSource: () => setViewMode(document, 'source'),
     viewPreview: () => setViewMode(document, 'preview'),
     viewSplit: () => setViewMode(document, 'split'),
+    activateSlides: () => {
+      if (editor) activateSlidesView(editor.value);
+    },
+    deactivateSlides: () => hideSlidesViewer(),
+    find: openFind,
+    findReplace: openFindReplace,
+    print: () => printFormattedDocument(document, { refreshPreview }),
     installQuickLook: installQuickLookPlugin,
     about: showAboutDialog,
   });
@@ -62,7 +76,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Set up toolbar after handlers are registered
   setupToolbar(document);
-  setViewMode(document, getViewMode() || 'split');
+  setViewMode(document, getViewMode() || 'preview');
 
   // Drag-and-drop to open files (sync folder panel after open)
   setupDragDrop(editor, refreshPreview, fileOpenPath, syncToFile);
@@ -73,12 +87,39 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // Folder panel
-  const openFromPanel = async (filePath) => {
-    await fileOpenPath(filePath, editor, refreshPreview);
+  const openFromPanel = async (fileId, fileName) => {
+    await fileOpenPath(fileId, editor, refreshPreview, { displayName: fileName });
   };
 
-  setupFolderPanel(openFromPanel);
+  setupFolderPanel(openFromPanel).then(() => {
+    const panel = document.getElementById('folder-panel');
+    if (panel) panel.classList.add('hidden');
+  });
   setupPanelResize();
+
+  // Find / Replace bar (visible in source and split mode)
+  setupFindReplace(document, () => document.getElementById('editor'));
+
+  // Keyboard: ⌘0 / Ctrl+0 = preview/PDF zoom 100%; ⌘F = Find; ⌘⌥F / Ctrl+H = Replace
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === '0' && !e.altKey) {
+      e.preventDefault();
+      resetPreviewZoom(document);
+      return;
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'f' && !e.altKey) {
+      e.preventDefault();
+      openFind();
+    }
+    if ((e.metaKey && e.altKey && e.key === 'f') || (e.ctrlKey && e.key === 'h')) {
+      e.preventDefault();
+      openFindReplace();
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
+      e.preventDefault();
+      printFormattedDocument(document, { refreshPreview });
+    }
+  });
 
   // Handle native menu actions — delegates to the same registered handlers
   window.__menuAction = (action) => {
