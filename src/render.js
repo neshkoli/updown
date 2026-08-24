@@ -93,10 +93,11 @@ function getMd() {
 /**
  * Render markdown source text to HTML string.
  * @param {string} source
+ * @param {{ allowLayoutHtml?: boolean }} [options]
  * @returns {string}
  */
-export function renderMarkdown(source) {
-  return getMd().render(stripHtmlForPreview(source || ''));
+export function renderMarkdown(source, options = {}) {
+  return getMd().render(stripHtmlForPreview(source || '', options));
 }
 
 /**

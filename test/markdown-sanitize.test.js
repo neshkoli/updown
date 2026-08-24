@@ -26,6 +26,34 @@ describe('stripHtmlForPreview', () => {
     expect(stripHtmlForPreview(input)).toContain('Visible text');
   });
 
+  it('preserves div and span with class when allowLayoutHtml is set', () => {
+    const input = [
+      '<div class="grid grid-cols-5 gap-4">',
+      '<div>',
+      '### Team',
+      '<span class="text-green-400 font-semibold">Name</span>',
+      '</div>',
+      '</div>',
+    ].join('\n');
+    const result = stripHtmlForPreview(input, { allowLayoutHtml: true });
+    expect(result).toContain('<div class="grid grid-cols-5 gap-4">');
+    expect(result).toContain('<div>');
+    expect(result).toContain('<span class="text-green-400 font-semibold">');
+    expect(result).toContain('</span>');
+    expect(result).toContain('</div>');
+  });
+
+  it('strips unsafe attributes from layout HTML', () => {
+    const input = '<div class="grid" onclick="alert(1)">x</div>';
+    const result = stripHtmlForPreview(input, { allowLayoutHtml: true });
+    expect(result).toBe('<div class="grid">x</div>');
+  });
+
+  it('still strips layout HTML without allowLayoutHtml option', () => {
+    const input = '<div class="grid">x</div>';
+    expect(stripHtmlForPreview(input)).toBe('x');
+  });
+
   it('preserves HTML inside fenced code blocks', () => {
     const input = '```html\n<!-- comment -->\n<div>code</div>\n```';
     expect(stripHtmlForPreview(input)).toContain('<!-- comment -->');
@@ -66,5 +94,30 @@ describe('renderMarkdown HTML stripping', () => {
     expect(html).toContain('<kbd>right</kbd>');
     expect(html).toContain('<kbd>space</kbd>');
     expect(html).toContain('next slide');
+  });
+
+  it('renders grid layout HTML in slides mode', () => {
+    const src = [
+      '# Team Overview',
+      '',
+      '<div class="grid grid-cols-5 gap-4 text-sm">',
+      '',
+      '<div>',
+      '',
+      '### Lifecycle',
+      '',
+      '1. Yacov',
+      '2. <span class="text-green-400 font-semibold">Roman</span>',
+      '',
+      '</div>',
+      '',
+      '</div>',
+    ].join('\n');
+    const html = renderMarkdown(src, { allowLayoutHtml: true });
+    expect(html).toContain('class="grid grid-cols-5 gap-4 text-sm"');
+    expect(html).toContain('<h3');
+    expect(html).toContain('Lifecycle</h3>');
+    expect(html).toContain('<span class="text-green-400 font-semibold">Roman</span>');
+    expect(html).toContain('<ol>');
   });
 });

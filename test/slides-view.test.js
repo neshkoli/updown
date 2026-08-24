@@ -111,6 +111,16 @@ describe('slides-view', () => {
     expect(stage.innerHTML).toContain('Slide 1');
   });
 
+  it('scales slides up to fill a larger preview frame', () => {
+    const outer = document.querySelector('.slides-canvas-outer');
+    const inner = document.querySelector('.slides-canvas-inner');
+    outer.getBoundingClientRect = () => ({ width: 1960, height: 1102 });
+
+    showSlidesViewer();
+
+    expect(Number(inner.style.getPropertyValue('--slide-scale'))).toBeCloseTo(2);
+  });
+
   it('uses fullscreen fallback when requestFullscreen unavailable', async () => {
     const wrap = document.getElementById('slides-viewer-wrap');
     showSlidesViewer();

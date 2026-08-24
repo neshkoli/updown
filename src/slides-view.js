@@ -120,10 +120,6 @@ function updateCanvasScale() {
 
   const rect = outer.getBoundingClientRect();
   let scale = Math.min(rect.width / canvasWidth, rect.height / canvasHeight);
-  // In the preview pane, don't upscale past 100%; in fullscreen, fill the viewport.
-  if (!isSlidesFullscreen()) {
-    scale = Math.min(scale, 1);
-  }
   inner.style.setProperty('--slide-scale', String(scale));
 }
 
@@ -148,7 +144,7 @@ function renderCurrentSlide() {
     style = `background-image: url('${background.replace(/'/g, "\\'")}'); background-size: cover; background-position: center;`;
   }
 
-  const html = renderMarkdown(slide.content);
+  const html = renderMarkdown(slide.content, { allowLayoutHtml: true });
   stage.innerHTML = `<div class="slidev-layout ${layout} ${extraClass}"${style ? ` style="${style}"` : ''}>${html}</div>`;
 
   applyBidi(stage);
