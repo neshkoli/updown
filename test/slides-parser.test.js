@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseSlides, countSlideSeparators } from '../src/slides-parser.js';
+import { parseSlides, countSlideSeparators, slideIndexAtOffset } from '../src/slides-parser.js';
 
 describe('countSlideSeparators', () => {
   it('counts --- lines as separators', () => {
@@ -93,5 +93,35 @@ const x = '---';
     const { slides, headmatter } = parseSlides('');
     expect(slides).toHaveLength(0);
     expect(headmatter).toEqual({});
+  });
+
+  it('records source offsets for each slide', () => {
+    const md = '# First\n---\n\n# Second';
+    const { slides } = parseSlides(md);
+    expect(slides).toHaveLength(2);
+    expect(slides[0].startOffset).toBe(0);
+    expect(md.slice(slides[1].startOffset, slides[1].endOffset)).toContain('# Second');
+    expect(slides[0].endOffset).toBeLessThanOrEqual(slides[1].startOffset);
+    expect(slides[1].endOffset).toBe(md.length);
+  });
+});
+
+describe('slideIndexAtOffset', () => {
+  const md = '# First\n---\n\n# Second\n---\n\n# Third';
+
+  it('returns 0 when offset is missing or not a number', () => {
+    expect(slideIndexAtOffset(md, undefined)).toBe(0);
+    expect(slideIndexAtOffset(md, null)).toBe(0);
+    expect(slideIndexAtOffset('', 10)).toBe(0);
+  });
+
+  it('maps a cursor inside a slide to that slide', () => {
+    expect(slideIndexAtOffset(md, 0)).toBe(0);
+    expect(slideIndexAtOffset(md, md.indexOf('# Second'))).toBe(1);
+    expect(slideIndexAtOffset(md, md.indexOf('# Third'))).toBe(2);
+  });
+
+  it('maps a cursor on a separator to the preceding slide', () => {
+    expect(slideIndexAtOffset(md, md.indexOf('---'))).toBe(0);
   });
 });

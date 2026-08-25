@@ -3,8 +3,10 @@
  */
 import { applyBidi } from './bidi.js';
 import { getViewMode } from './editor-ui.js';
+import { getCurrentFilePath } from './file-ops.js';
+import { rewriteLocalMediaInElement } from './local-media.js';
 import { renderMarkdown } from './render.js';
-import { parseSlides } from './slides-parser.js';
+import { parseSlides, slideIndexAtOffset } from './slides-parser.js';
 import { applyTheme } from './slides-themes.js';
 
 /** @type {{ headmatter: Record<string, unknown>, slides: Array }} */
@@ -146,6 +148,7 @@ function renderCurrentSlide() {
 
   const html = renderMarkdown(slide.content, { allowLayoutHtml: true });
   stage.innerHTML = `<div class="slidev-layout ${layout} ${extraClass}"${style ? ` style="${style}"` : ''}>${html}</div>`;
+  rewriteLocalMediaInElement(stage, getCurrentFilePath());
 
   applyBidi(stage);
 
@@ -408,9 +411,15 @@ export function initSlidesView() {
 
 /**
  * Called when entering slides view mode.
+ * @param {string} source
+ * @param {number} [sourceOffset]
  */
-export function activateSlidesView(source) {
+export function activateSlidesView(source, sourceOffset) {
   updateSlidesView(source);
+  const index = typeof sourceOffset === 'number' && Number.isFinite(sourceOffset)
+    ? slideIndexAtOffset(source, sourceOffset)
+    : 0;
+  setSlideIndex(index);
   showSlidesViewer();
   renderCurrentSlide();
 }

@@ -163,14 +163,22 @@ describe('setupLivePreview', () => {
     expect(preview.innerHTML).toBe('');
   });
 
-  it('renders after input event', async () => {
+  it('rewrites local images relative to the open markdown file', async () => {
+    window.__TAURI_INTERNALS__ = {
+      convertFileSrc: (path) => `asset://localhost${path}`,
+    };
+    const { setCurrentFilePath } = await import('../src/file-ops.js');
+    setCurrentFilePath('/Users/me/docs/notes.md');
+
     const editor = document.getElementById('editor');
     const preview = document.getElementById('preview');
+    editor.value = '![ui](./deprecation-ui.png)';
     setupLivePreview(editor, preview, 0);
-    editor.value = '# Test';
-    editor.dispatchEvent(new Event('input'));
-    await new Promise(r => setTimeout(r, 20));
-    // After bidi pass, the h1 has dir and style attributes
-    expect(preview.querySelector('h1').textContent).toBe('Test');
+
+    expect(preview.querySelector('img').getAttribute('src'))
+      .toBe('asset://localhost/Users/me/docs/deprecation-ui.png');
+
+    delete window.__TAURI_INTERNALS__;
+    setCurrentFilePath(null);
   });
 });

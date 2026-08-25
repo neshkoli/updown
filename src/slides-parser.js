@@ -9,6 +9,27 @@ const RE_FRONTMATTER = /^---\r?\n([\s\S]*?)---/;
 const RE_YAML_CODEBLOCK = /^\s*```ya?ml([\s\S]*?)```/;
 const RE_HEADING = /^(#+) (.*)$/m;
 
+function splitLinesWithOffsets(markdown) {
+  const lines = [];
+  const re = /\r?\n/g;
+  let last = 0;
+  let match;
+  while ((match = re.exec(markdown))) {
+    lines.push({
+      text: markdown.slice(last, match.index),
+      start: last,
+      end: re.lastIndex,
+    });
+    last = re.lastIndex;
+  }
+  lines.push({
+    text: markdown.slice(last),
+    start: last,
+    end: markdown.length,
+  });
+  return lines;
+}
+
 function advanceHtmlCommentState(line, inHtmlComment) {
   let cursor = 0;
   while (cursor < line.length) {
@@ -147,15 +168,17 @@ export function parseSlides(markdown) {
     return { headmatter: {}, slides: [] };
   }
 
-  const lines = markdown.split(RE_CRLF);
+  const lines = splitLinesWithOffsets(markdown);
   const slides = [];
   let start = 0;
   let inHtmlComment = false;
 
   function slice(end) {
     if (start === end) return;
-    const raw = lines.slice(start, end).join('\n');
+    const raw = lines.slice(start, end).map((line) => line.text).join('\n');
     const parsed = parseSlide(raw);
+    const startLine = lines[start];
+    const endLine = lines[end - 1];
     slides.push({
       index: slides.length,
       content: parsed.content,
@@ -163,12 +186,14 @@ export function parseSlides(markdown) {
       note: parsed.note,
       title: parsed.title,
       layout: typeof parsed.frontmatter.layout === 'string' ? parsed.frontmatter.layout : 'default',
+      startOffset: startLine.start,
+      endOffset: endLine.end,
     });
     start = end + 1;
   }
 
   for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i];
+    const rawLine = lines[i].text;
     const line = rawLine.trimEnd();
     if (inHtmlComment) {
       inHtmlComment = advanceHtmlCommentState(rawLine, true);
@@ -177,18 +202,18 @@ export function parseSlides(markdown) {
 
     if (line.startsWith('---')) {
       slice(i);
-      const next = lines[i + 1];
+      const next = lines[i + 1]?.text;
       if (line[3] !== '-' && next?.trim()) {
         start = i;
         for (i += 1; i < lines.length; i++) {
-          if (lines[i].trimEnd() === '---') break;
+          if (lines[i].text.trimEnd() === '---') break;
         }
       }
     } else if (line.trimStart().startsWith('```')) {
       const ticks = line.match(/^(\s*`+)/)?.[1] ?? '```';
       let j = i + 1;
       for (; j < lines.length; j++) {
-        if (lines[j].startsWith(ticks)) break;
+        if (lines[j].text.startsWith(ticks)) break;
       }
       if (j !== lines.length) i = j;
     } else {
@@ -203,4 +228,22 @@ export function parseSlides(markdown) {
   const headmatter = slides.length > 0 ? { ...slides[0].frontmatter } : {};
 
   return { headmatter, slides };
+}
+
+/**
+ * Slide index for a character offset in the raw markdown source.
+ * Missing or invalid offsets map to the first slide.
+ * @param {string} markdown
+ * @param {number} [offset]
+ * @returns {number}
+ */
+export function slideIndexAtOffset(markdown, offset) {
+  if (typeof offset !== 'number' || !Number.isFinite(offset)) return 0;
+  const { slides } = parseSlides(markdown);
+  if (!slides.length) return 0;
+  let index = 0;
+  for (const slide of slides) {
+    if (slide.startOffset <= offset) index = slide.index;
+  }
+  return index;
 }

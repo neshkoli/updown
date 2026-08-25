@@ -75,9 +75,19 @@ export async function bootstrapApp(platform) {
   const editor = document.getElementById('editor');
   const preview = document.getElementById('preview');
   let refreshPreview = () => {};
+  let lastEditOffset;
 
   if (editor && preview) {
     refreshPreview = setupLivePreview(editor, preview);
+  }
+
+  if (editor) {
+    const rememberEditOffset = () => {
+      lastEditOffset = editor.selectionStart;
+    };
+    editor.addEventListener('input', rememberEditOffset);
+    editor.addEventListener('keyup', rememberEditOffset);
+    editor.addEventListener('click', rememberEditOffset);
   }
 
   initSlidesView();
@@ -98,7 +108,10 @@ export async function bootstrapApp(platform) {
     viewPreview: () => setViewMode(document, 'preview'),
     viewSplit: () => setViewMode(document, 'split'),
     activateSlides: () => {
-      if (editor) activateSlidesView(editor.value);
+      if (!editor) return;
+      const cursor = editor.selectionStart;
+      const offset = typeof cursor === 'number' ? cursor : lastEditOffset;
+      activateSlidesView(editor.value, offset);
     },
     deactivateSlides: () => hideSlidesViewer(),
     find: openFind,

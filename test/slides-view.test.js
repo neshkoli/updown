@@ -14,6 +14,8 @@ const {
   hideSlidesViewer,
   isSlidesViewActive,
   getCurrentDeck,
+  getCurrentSlideIndex,
+  activateSlidesView,
   enterFullscreen,
   exitFullscreen,
   onWindowFullscreenChange,
@@ -111,6 +113,25 @@ describe('slides-view', () => {
     expect(stage.innerHTML).toContain('Slide 1');
   });
 
+  it('rewrites local images relative to the open markdown file', async () => {
+    window.__TAURI_INTERNALS__ = {
+      convertFileSrc: (path) => `asset://localhost${path}`,
+    };
+    const { setCurrentFilePath } = await import('../src/file-ops.js');
+    setCurrentFilePath('/Users/me/talk/deck.md');
+    updateSlidesView(`---
+theme: default
+---
+
+![ui](./deprecation-ui.png)
+`);
+    showSlidesViewer();
+    expect(document.querySelector('#slides-stage img').getAttribute('src'))
+      .toBe('asset://localhost/Users/me/talk/deprecation-ui.png');
+    setCurrentFilePath(null);
+    delete window.__TAURI_INTERNALS__;
+  });
+
   it('scales slides up to fill a larger preview frame', () => {
     const outer = document.querySelector('.slides-canvas-outer');
     const inner = document.querySelector('.slides-canvas-inner');
@@ -147,5 +168,19 @@ describe('slides-view', () => {
     await enterFullscreen();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(wrap.classList.contains('slides-fullscreen-fallback')).toBe(false);
+  });
+
+  it('opens on the slide at the source cursor offset', () => {
+    const offset = sampleDeck.indexOf('# Slide 3');
+    activateSlidesView(sampleDeck, offset);
+    expect(getCurrentSlideIndex()).toBe(2);
+    expect(document.getElementById('slides-counter').textContent).toBe('3 / 3');
+  });
+
+  it('opens on the first slide when no offset is given', () => {
+    setSlideIndex(2);
+    activateSlidesView(sampleDeck);
+    expect(getCurrentSlideIndex()).toBe(0);
+    expect(document.getElementById('slides-counter').textContent).toBe('1 / 3');
   });
 });

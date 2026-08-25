@@ -9,6 +9,8 @@ import { stripHtmlForPreview } from './markdown-sanitize.js';
 import { isPresentationDeck } from './presentation-detect.js';
 import { updatePresentationToolbar, getViewMode } from './editor-ui.js';
 import { updateSlidesView } from './slides-view.js';
+import { rewriteLocalMediaInElement } from './local-media.js';
+import { getCurrentFilePath } from './file-ops.js';
 import { debounce } from './utils.js';
 
 // Lazily initialized markdown-it instance.
@@ -128,6 +130,7 @@ export function setupLivePreview(editor, preview, delayMs = 150) {
 
     // Render body (without frontmatter) into preview
     preview.innerHTML = renderMarkdown(body);
+    rewriteLocalMediaInElement(preview, getCurrentFilePath());
     applyBidi(preview);
 
     // Render any mermaid diagrams found in the preview

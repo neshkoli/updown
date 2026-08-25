@@ -6,6 +6,7 @@
  */
 
 import { applyPreviewZoom, bindPdfIframeWheelZoom, detachPdfIframeWheelZoom } from './editor-ui.js';
+import { convertLocalFileToSrc } from './local-media.js';
 
 /** @type {string|null} */
 let blobUrlToRevoke = null;
@@ -56,16 +57,7 @@ function convertLocalPathToSrc(filePath) {
   if (typeof globalThis.__UPDOWN_TEST_PDF_SRC__ === 'string') {
     return globalThis.__UPDOWN_TEST_PDF_SRC__;
   }
-  // Tauri 2: convertFileSrc lives on __TAURI_INTERNALS__; core.convertFileSrc when withGlobalTauri bundles it.
-  const internals = window.__TAURI_INTERNALS__;
-  if (typeof internals?.convertFileSrc === 'function') {
-    return internals.convertFileSrc(filePath, 'asset');
-  }
-  const convert = window.__TAURI__?.core?.convertFileSrc;
-  if (typeof convert === 'function') {
-    return convert(filePath, 'asset');
-  }
-  return null;
+  return convertLocalFileToSrc(filePath);
 }
 
 /**
