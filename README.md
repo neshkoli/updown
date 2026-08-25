@@ -85,13 +85,19 @@ npm test
 npx tauri build
 ```
 
-To build a full release (Quick Look plugin + app + DMG) in one step (requires Xcode on macOS):
+To build a full release (Quick Look plugin + app + DMG) in one step (requires Xcode on a Mac):
 
 ```bash
 ./scripts/build-release.sh
 ```
 
-Or step by step: run `npm run build:ql`, then `npx tauri build`. (In CI the workflow sets `CI: false` so the build succeeds.)
+Publish that DMG from this laptop (do not compile the Mac app in GitHub Actions):
+
+```bash
+./scripts/publish-release.sh
+```
+
+That creates the GitHub Release with the DMG. CI then downloads the artifact and uploads it to JFrog Fly. Or step by step: `npm run build:ql`, then `npx tauri build`.
 
 The production build outputs:
 - **macOS**: `src-tauri/target/release/bundle/macos/UpDown.app`
