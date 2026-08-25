@@ -4,9 +4,10 @@ This document describes how to build and deploy the UpDown web app, and how to c
 
 ## Live site
 
-The production web app is hosted at **[updown.eshkoli.com](https://updown.eshkoli.com)**.
+- **Landing page:** [neshkoli.github.io/updown](https://neshkoli.github.io/updown) (also at [updown.eshkoli.com](https://updown.eshkoli.com))
+- **Web app:** [updown.eshkoli.com/app/](https://updown.eshkoli.com/app/)
 
-Pushes to the `main` branch trigger an automatic deploy via `.github/workflows/deploy-web.yml` (GitHub Pages).
+Pushes to the `main` branch trigger an automatic deploy via `.github/workflows/deploy-web.yml` (GitHub Pages). The workflow deploys the static landing page from `docs/` at the site root and the built web app under `/app/`.
 
 ## Building the Web App
 
@@ -14,7 +15,7 @@ Pushes to the `main` branch trigger an automatic deploy via `.github/workflows/d
 npm run build:web
 ```
 
-This produces a static build in the `dist/` directory. The entry point is `dist/index.html` (hoisted from `dist/web/index.html` during the build).
+This produces a static build in the `dist/` directory. The entry point is `dist/index.html` (hoisted from `dist/src/index.html` during the build; both desktop and web share `src/index.html`).
 
 ## Local Development
 
@@ -35,13 +36,10 @@ Starts the Vite dev server at http://localhost:5173.
 
 ### Base path
 
-The site uses a custom domain and is served from the site root. In `vite.config.js`:
+The landing page is served from the site root. The web app is built with `base: '/app/'` when `GITHUB_PAGES=true` (see `vite.config.js`). Production URLs:
 
-```js
-base: '/',
-```
-
-If you deploy to a subpath instead (e.g. `https://example.com/updown/`), set `base: '/updown/'`.
+- Landing: `https://neshkoli.github.io/updown/` or `https://updown.eshkoli.com/`
+- Web app: `https://updown.eshkoli.com/app/`
 
 ### Other hosts
 
@@ -73,7 +71,7 @@ To enable Google Drive (open, save, browse files), configure a Google Cloud proj
 3. Name: e.g. "UpDown Web"
 4. **Authorized JavaScript origins**:
    - `http://localhost:5173` (for development)
-   - `https://updown.eshkoli.com` (production)
+   - `https://updown.eshkoli.com` (production — add `/app/` path for the web app entry)
 5. Copy the **Client ID**
 
 ### 4. Configure the Client ID in the App

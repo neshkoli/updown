@@ -3,259 +3,314 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="UpDown — a lightweight Markdown viewer and editor for macOS and the web. Split view, slide decks, Mermaid diagrams, Google Drive, and more."
+    />
     <title>UpDown — Markdown viewer &amp; editor</title>
     <link rel="icon" href="icon.png" type="image/png" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="bg-stone-50 text-stone-900 antialiased">
-    <header class="border-b border-stone-200 bg-white/80 backdrop-blur">
-      <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <div class="flex flex-col items-center gap-6 text-center sm:gap-8">
-          <img
-            src="icon.png"
-            alt="UpDown"
-            width="128"
-            height="128"
-            class="h-24 w-24 rounded-2xl shadow-md sm:h-28 sm:w-28"
-          />
-          <div>
-            <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">UpDown</h1>
-            <p class="mt-2 text-lg text-stone-600 sm:text-xl">
-              A lightweight Markdown viewer and editor — desktop app and web
-            </p>
-          </div>
-          <div class="flex flex-col gap-3 sm:flex-row sm:gap-4">
-            <a
-              href="https://updown.eshkoli.com"
-              class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Open web app
-            </a>
-            <a
-              href="https://github.com/neshkoli/updown/releases/latest"
-              class="inline-flex items-center justify-center rounded-lg border border-stone-300 bg-white px-6 py-3 text-base font-medium text-stone-900 shadow-sm transition hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Download for macOS
-            </a>
-          </div>
-        </div>
+  <body>
+    <header class="site-header">
+      <div class="container nav">
+        <a class="brand" href="#top">
+          <img src="icon.png" alt="" width="40" height="40" />
+          <span>UpDown</span>
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="#features">Features</a>
+          <a href="#screenshots">Screenshots</a>
+          <a href="#platforms">Platforms</a>
+          <a class="btn btn-primary" href="app/">Open web app</a>
+        </nav>
       </div>
     </header>
 
-    <main class="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
-      <!-- Hero screenshot: split view -->
-      <section class="mb-16 sm:mb-20" aria-label="App screenshot">
-        <img
-          src="screenshots/split.png"
-          alt="UpDown split view — source and preview side by side"
-          class="w-full max-w-4xl mx-auto rounded-xl border border-stone-200 shadow-lg"
-        />
-      </section>
-
-      <!-- Features -->
-      <section class="mb-16 sm:mb-20" aria-labelledby="features-heading">
-        <h2 id="features-heading" class="mb-8 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Features
-        </h2>
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Three view modes</h3>
-            <p class="mt-1 text-sm text-stone-600">Source, Preview, and Split (side-by-side)</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Markdown toolbar</h3>
-            <p class="mt-1 text-sm text-stone-600">Bold, Italic, headings, link, image, lists, blockquote, code, table</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Live preview</h3>
-            <p class="mt-1 text-sm text-stone-600">Rendered output updates as you type</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Bidirectional text</h3>
-            <p class="mt-1 text-sm text-stone-600">Hebrew and other RTL text align automatically</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Folder panel</h3>
-            <p class="mt-1 text-sm text-stone-600">Browsable sidebar for markdown files, drag-to-resize</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">File operations</h3>
-            <p class="mt-1 text-sm text-stone-600">New, Open, Save, Save As via toolbar or native dialogs</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Drag and drop</h3>
-            <p class="mt-1 text-sm text-stone-600">Drop .md files onto the window to open them</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Autosave</h3>
-            <p class="mt-1 text-sm text-stone-600">Saves changes automatically after a short idle period</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Web app</h3>
-            <p class="mt-1 text-sm text-stone-600">Use UpDown in the browser with local files or Google Drive</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Slide presentations</h3>
-            <p class="mt-1 text-sm text-stone-600">Marp/Slidev-style decks with themes, navigation, and present mode</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Find &amp; Replace</h3>
-            <p class="mt-1 text-sm text-stone-600">Search and replace in the editor with keyboard shortcuts</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Mermaid &amp; PDF</h3>
-            <p class="mt-1 text-sm text-stone-600">Diagrams in preview; open and zoom PDF files alongside markdown</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Print</h3>
-            <p class="mt-1 text-sm text-stone-600">Print formatted preview from the toolbar</p>
-          </div>
-          <div class="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h3 class="font-medium text-stone-900">Quick Look</h3>
-            <p class="mt-1 text-sm text-stone-600">Press Space in Finder to preview .md files (macOS)</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Screenshots -->
-      <section class="mb-16 sm:mb-20" aria-labelledby="screenshots-heading">
-        <h2 id="screenshots-heading" class="mb-8 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Screenshots
-        </h2>
-        <div class="grid gap-6 sm:grid-cols-2">
-          <figure>
-            <img
-              src="screenshots/source.png"
-              alt="UpDown source view — editing raw Markdown"
-              class="w-full rounded-xl border border-stone-200 shadow-sm"
-            />
-            <figcaption class="mt-2 text-center text-sm text-stone-600">Source view</figcaption>
-          </figure>
-          <figure>
-            <img
-              src="screenshots/preview.png"
-              alt="UpDown preview view — rendered Markdown"
-              class="w-full rounded-xl border border-stone-200 shadow-sm"
-            />
-            <figcaption class="mt-2 text-center text-sm text-stone-600">Preview view</figcaption>
-          </figure>
-          <figure>
-            <img
-              src="screenshots/quicklook.png"
-              alt="Quick Look preview of a Markdown file in Finder"
-              class="w-full rounded-xl border border-stone-200 shadow-sm"
-            />
-            <figcaption class="mt-2 text-center text-sm text-stone-600">Quick Look in Finder</figcaption>
-          </figure>
-        </div>
-      </section>
-
-      <!-- Web app -->
-      <section class="mb-16 sm:mb-20" aria-labelledby="web-heading">
-        <h2 id="web-heading" class="mb-8 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Use in your browser
-        </h2>
-        <div class="rounded-xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
-          <p class="text-stone-700">
-            The web app at
-            <a href="https://updown.eshkoli.com" class="text-blue-600 underline hover:text-blue-700">updown.eshkoli.com</a>
-            offers the same editor and preview. Open local <code class="rounded bg-stone-100 px-1.5 py-0.5 text-sm">.md</code> files
-            via drag-and-drop or the file picker, or sign in with Google to browse and save files in Drive.
-          </p>
-          <p class="mt-4">
-            <a
-              href="https://updown.eshkoli.com"
-              class="inline-flex items-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"
-            >Launch web app</a>
-          </p>
-        </div>
-      </section>
-
-      <!-- Install & use -->
-      <section class="mb-16 sm:mb-20" aria-labelledby="install-heading">
-        <h2 id="install-heading" class="mb-8 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Install &amp; use
-        </h2>
-        <div class="rounded-xl border border-stone-200 bg-white p-6 shadow-sm sm:p-8">
-          <ol class="list-decimal space-y-4 pl-5">
-            <li>
-              <strong>Download</strong> — Go to
+    <main id="top">
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="reveal">
+            <p class="eyebrow">Markdown, refined</p>
+            <h1>Write in source. <em>See it live.</em></h1>
+            <p class="hero-lead">
+              UpDown is a lightweight Markdown viewer and editor — native on macOS,
+              instant in the browser. Edit, preview, present slides, and manage files
+              without the bloat.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="app/">Open web app</a>
               <a
+                class="btn btn-secondary"
                 href="https://github.com/neshkoli/updown/releases/latest"
-                class="text-blue-600 underline hover:text-blue-700"
-              >GitHub Releases</a>
-              and download the latest <strong>UpDown_X.Y.Z_aarch64.dmg</strong> (Apple Silicon).
-            </li>
-            <li>
-              <strong>Open the DMG</strong> — Double-click it in your Downloads folder.
-            </li>
-            <li>
-              <strong>Install</strong> — Drag <strong>UpDown</strong> into the <strong>Applications</strong> folder.
-            </li>
-            <li>
-              <strong>Launch</strong> — Eject the DMG, then open UpDown from Applications.
-            </li>
-          </ol>
-          <div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <p class="font-semibold">First launch — Gatekeeper</p>
-            <p class="mt-1">
-              Because the app is not yet notarized by Apple, macOS may show
-              <em>"UpDown is damaged and can't be opened."</em>
-              To fix this, open <strong>Terminal</strong> and run:
-            </p>
-            <pre class="mt-2 overflow-x-auto rounded bg-amber-100 px-3 py-2 font-mono text-xs text-amber-950">xattr -d com.apple.quarantine /Applications/UpDown.app</pre>
-            <p class="mt-2">Then open UpDown normally from Applications. You only need to do this once.</p>
+              >Download for macOS</a>
+            </div>
+            <div class="hero-meta">
+              <span>Source · Preview · Split</span>
+              <span>Slides &amp; Mermaid</span>
+              <span>MIT · Tauri 2</span>
+            </div>
           </div>
-          <div class="mt-6 border-t border-stone-200 pt-6">
-            <h3 class="font-medium text-stone-900">Quick Look (macOS)</h3>
-            <p class="mt-2 text-sm text-stone-600">
-              UpDown can install a Quick Look plugin so you can preview Markdown files by pressing <strong>Space</strong> in Finder.
-              On first launch, UpDown may offer to install it; you can also use <strong>File → Install Quick Look Plugin…</strong>.
-            </p>
+          <div class="hero-visual reveal">
+            <img
+              class="hero-shot"
+              src="screenshots/split.png"
+              alt="UpDown split view with Markdown source and live preview side by side"
+              width="1200"
+              height="750"
+            />
+            <div class="split-badge"><strong>Split view</strong> — edit &amp; preview together</div>
           </div>
         </div>
       </section>
 
-      <!-- Download CTA -->
-      <section class="mb-16 text-center sm:mb-20" aria-labelledby="download-heading">
-        <h2 id="download-heading" class="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Get UpDown
-        </h2>
-        <div class="flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
-          <a
-            href="https://updown.eshkoli.com"
-            class="inline-flex items-center rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Open web app
-          </a>
-          <a
-            href="https://github.com/neshkoli/updown/releases/latest"
-            class="inline-flex items-center rounded-lg border border-stone-300 bg-white px-6 py-3 text-base font-medium text-stone-900 shadow-sm transition hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Download for macOS
-          </a>
+      <section id="features" aria-labelledby="features-heading">
+        <div class="container">
+          <div class="section-head reveal">
+            <h2 id="features-heading">Built for real writing workflows</h2>
+            <p>
+              Everything you need to draft, review, and share Markdown — from quick notes
+              to polished slide decks.
+            </p>
+          </div>
+
+          <div class="pillars reveal">
+            <article class="pillar">
+              <svg class="pillar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <path d="M4 6h16M4 12h10M4 18h14" />
+                <rect x="15" y="9" width="5" height="10" rx="1" />
+              </svg>
+              <h3>Three view modes</h3>
+              <p>Switch between Source, Preview, and Split — side-by-side editing with live render.</p>
+            </article>
+            <article class="pillar">
+              <svg class="pillar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="12" rx="2" />
+                <path d="M8 20h8M12 16v4" />
+              </svg>
+              <h3>Slide presentations</h3>
+              <p>Marp-style decks with <code>---</code> separators, themes, keyboard nav, and fullscreen present mode.</p>
+            </article>
+            <article class="pillar">
+              <svg class="pillar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+              </svg>
+              <h3>Web &amp; desktop</h3>
+              <p>Native macOS app with Quick Look, plus a browser version with guest mode and Google Drive.</p>
+            </article>
+          </div>
+
+          <div class="feature-grid reveal" style="margin-top: 1.25rem">
+            <article class="feature-card">
+              <h3>Markdown toolbar</h3>
+              <p>Bold, italic, headings, links, images, lists, blockquotes, code blocks, tables, and horizontal rules.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Live preview</h3>
+              <p>Rendered output updates as you type — debounced for smooth performance.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Mermaid diagrams</h3>
+              <p>Flowcharts, sequence diagrams, and more render inline in preview.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Find &amp; replace</h3>
+              <p>Search and replace in the editor with keyboard shortcuts (⌘F / ⌘⌥F).</p>
+            </article>
+            <article class="feature-card">
+              <h3>Bidirectional text</h3>
+              <p>Hebrew and other RTL paragraphs align automatically based on content.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Folder panel</h3>
+              <p>Browse markdown files in a resizable sidebar with persistent state.</p>
+            </article>
+            <article class="feature-card">
+              <h3>File operations</h3>
+              <p>New, open, save, and save as — via toolbar or native dialogs. PDF viewing too.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Drag &amp; drop</h3>
+              <p>Drop <code>.md</code> or <code>.pdf</code> files onto the window to open them instantly.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Autosave</h3>
+              <p>Changes save automatically after a short idle period when a file is open.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Print</h3>
+              <p>Print a formatted preview from the toolbar (⌘P).</p>
+            </article>
+            <article class="feature-card">
+              <h3>Preview zoom</h3>
+              <p>Scale preview from 50% to 200% for comfortable reading.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Quick Look</h3>
+              <p>Press Space in Finder to preview <code>.md</code> files without opening the app.</p>
+            </article>
+          </div>
         </div>
-        <p class="mt-4">
-          <a
-            href="https://github.com/neshkoli/updown/releases"
-            class="text-sm text-stone-600 underline hover:text-stone-900"
-          >View all releases</a>
-        </p>
+      </section>
+
+      <section id="screenshots" aria-labelledby="screenshots-heading">
+        <div class="container">
+          <div class="section-head reveal">
+            <h2 id="screenshots-heading">See it in action</h2>
+            <p>Clean editing surfaces that stay out of your way.</p>
+          </div>
+          <div class="shot-grid reveal">
+            <figure>
+              <img
+                src="screenshots/source.png"
+                alt="UpDown source view — editing raw Markdown with toolbar"
+                width="900"
+                height="560"
+              />
+              <figcaption>Source view</figcaption>
+            </figure>
+            <figure>
+              <img
+                src="screenshots/preview.png"
+                alt="UpDown preview view — rendered Markdown output"
+                width="900"
+                height="560"
+              />
+              <figcaption>Preview view</figcaption>
+            </figure>
+            <figure>
+              <img
+                src="screenshots/quicklook.png"
+                alt="Quick Look preview of a Markdown file in macOS Finder"
+                width="900"
+                height="560"
+              />
+              <figcaption>Quick Look in Finder</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="platforms" aria-labelledby="platforms-heading">
+        <div class="container">
+          <div class="section-head reveal">
+            <h2 id="platforms-heading">Two ways to use UpDown</h2>
+            <p>Pick the experience that fits — a native desktop app or a zero-install web app.</p>
+          </div>
+          <div class="platforms reveal">
+            <article class="platform-card">
+              <h3>Web app</h3>
+              <p>
+                Run UpDown in your browser at
+                <a href="app/">updown.eshkoli.com/app/</a>.
+                Same editor, slides, find/replace, Mermaid, and print.
+              </p>
+              <ul>
+                <li><strong>Guest mode</strong> — open local files via drag-and-drop or file picker</li>
+                <li><strong>Google Drive</strong> — sign in to browse, save, and create folders</li>
+                <li>No install required — works on any modern browser</li>
+              </ul>
+              <a class="btn btn-primary" href="app/">Launch web app</a>
+            </article>
+            <article class="platform-card">
+              <h3>macOS desktop</h3>
+              <p>
+                A native app built with Tauri 2 — small footprint, system WebView, and
+                macOS integrations like Quick Look.
+              </p>
+              <ul>
+                <li>Folder panel for local project navigation</li>
+                <li>Native open/save dialogs and autosave</li>
+                <li>Quick Look plugin for Finder previews</li>
+              </ul>
+              <a
+                class="btn btn-secondary"
+                href="https://github.com/neshkoli/updown/releases/latest"
+              >Download latest release</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="install" aria-labelledby="install-heading">
+        <div class="container">
+          <div class="section-head reveal">
+            <h2 id="install-heading">Install on macOS</h2>
+            <p>Apple Silicon build — drag to Applications and start writing.</p>
+          </div>
+          <div class="install-box reveal">
+            <ol class="install-steps">
+              <li>
+                Download the latest <strong>UpDown_X.Y.Z_aarch64.dmg</strong> from
+                <a href="https://github.com/neshkoli/updown/releases/latest">GitHub Releases</a>.
+              </li>
+              <li>Open the DMG and drag <strong>UpDown</strong> into <strong>Applications</strong>.</li>
+              <li>Eject the disk image, then launch UpDown from Applications.</li>
+            </ol>
+            <div class="note">
+              <strong>First launch — Gatekeeper</strong>
+              macOS may show <em>"UpDown is damaged and can't be opened."</em> Run this once in Terminal:
+              <pre>xattr -d com.apple.quarantine /Applications/UpDown.app</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="container">
+        <div class="cta-band reveal">
+          <h2>Start writing in UpDown</h2>
+          <p>Open the web app in seconds, or download the macOS app for offline work.</p>
+          <div class="cta-actions">
+            <a class="btn btn-primary" href="app/">Open web app</a>
+            <a
+              class="btn btn-secondary"
+              href="https://github.com/neshkoli/updown/releases/latest"
+            >Download for macOS</a>
+          </div>
+        </div>
       </section>
     </main>
 
-    <footer class="border-t border-stone-200 bg-white py-8">
-      <div class="mx-auto max-w-5xl px-4 sm:px-6">
-        <div class="flex flex-col items-center gap-2 text-center text-sm text-stone-600">
-          <p>
-            <a
-              href="https://github.com/neshkoli/updown"
-              class="underline hover:text-stone-900"
-            >github.com/neshkoli/updown</a>
-          </p>
-          <p>MIT License · Built with Tauri 2</p>
-        </div>
+    <footer class="site-footer">
+      <div class="container">
+        <p>
+          <a href="https://github.com/neshkoli/updown">github.com/neshkoli/updown</a>
+        </p>
+        <p>MIT License · Built with Tauri 2 · by <a href="https://github.com/neshkoli">neshkoli</a></p>
       </div>
     </footer>
+
+    <script>
+      (function () {
+        var prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (!prefersReduced && "IntersectionObserver" in window) {
+          var observer = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("is-visible");
+                  observer.unobserve(entry.target);
+                }
+              });
+            },
+            { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+          );
+          document.querySelectorAll(".reveal").forEach(function (el) {
+            observer.observe(el);
+          });
+        } else {
+          document.querySelectorAll(".reveal").forEach(function (el) {
+            el.classList.add("is-visible");
+          });
+        }
+      })();
+    </script>
   </body>
 </html>

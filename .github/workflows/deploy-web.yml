@@ -37,6 +37,31 @@ jobs:
           GITHUB_PAGES: true
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
+      - name: Add landing page
+        run: |
+          mkdir -p dist/_staging
+          shopt -s dotglob
+          for item in dist/*; do
+            base="$(basename "$item")"
+            case "$base" in
+              _staging) continue ;;
+            esac
+            mv "$item" dist/_staging/
+          done
+
+          mkdir -p dist/app
+          mv dist/_staging/* dist/app/
+          rmdir dist/_staging
+          cp dist/app/src/index.html dist/app/index.html
+          sed -i 's|\.\./assets/|assets/|g' dist/app/index.html
+          if [ -f dist/app/CNAME ]; then mv dist/app/CNAME dist/CNAME; fi
+
+          cp docs/index.html dist/index.html
+          cp docs/styles.css dist/styles.css
+          cp docs/icon.png dist/icon.png
+          cp docs/.nojekyll dist/.nojekyll
+          cp -R docs/screenshots dist/screenshots
+
       - name: Package Pages artifact
         run: |
           tar \
@@ -45,7 +70,6 @@ jobs:
             -cvf "$RUNNER_TEMP/artifact.tar" \
             --exclude=.git \
             --exclude=.github \
-            --exclude=".[^/]*" \
             .
 
       - name: Upload Pages artifact

@@ -2,16 +2,17 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 
+const appHtml = resolve(__dirname, 'src/index.html');
+
 export default defineConfig({
   root: '.',
   publicDir: 'src',
-  // Custom domain (updown.eshkoli.com) serves from root, so base is always '/'
-  base: '/',
+  base: process.env.GITHUB_PAGES ? './' : '/',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
-      input: resolve(__dirname, 'web/index.html'),
+      input: appHtml,
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
       },
@@ -19,20 +20,34 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    open: '/src/index.html',
   },
   plugins: [
     {
-      // publicDir (src/) is copied to dist/ during writeBundle.
-      // src/index.html (the Tauri desktop entry) overwrites the built web app.
-      // This plugin runs after that copy and restores dist/index.html from
-      // the Rollup-built dist/web/index.html.
+      // Tauri loads UMD copies from /lib; web build bundles markdown-it/mermaid instead.
+      name: 'strip-umd-for-web',
+      apply: 'build',
+      transformIndexHtml(html, ctx) {
+        if (!ctx.filename || resolve(ctx.filename) !== appHtml) return html;
+        return html
+          .replace(/<script src="lib\/markdown-it\.min\.js"><\/script>\s*/g, '')
+          .replace(/<script src="lib\/mermaid\.min\.js"><\/script>\s*/g, '')
+          .replace(/<script src="\/lib\/markdown-it\.min\.js"><\/script>\s*/g, '')
+          .replace(/<script src="\/lib\/mermaid\.min\.js"><\/script>\s*/g, '');
+      },
+    },
+    {
+      // publicDir copies src/ after the bundle step, overwriting dist/index.html with
+      // the raw Tauri shell. Restore the bundled app entry afterward.
       name: 'hoist-web-index',
       enforce: 'post',
       writeBundle() {
-        const src = resolve(__dirname, 'dist/web/index.html');
+        if (process.env.GITHUB_PAGES) return;
+
+        const bundled = resolve(__dirname, 'dist/src/index.html');
         const dest = resolve(__dirname, 'dist/index.html');
-        if (existsSync(src)) {
-          writeFileSync(dest, readFileSync(src, 'utf-8'));
+        if (existsSync(bundled)) {
+          writeFileSync(dest, readFileSync(bundled, 'utf-8'));
         }
       },
     },

@@ -53,7 +53,7 @@ Then open UpDown normally from Applications. You only need to do this once.
 
 ## Web Version
 
-UpDown also runs as a static web app at **[updown.eshkoli.com](https://updown.eshkoli.com)**.
+UpDown also runs as a static web app at **[updown.eshkoli.com/app/](https://updown.eshkoli.com/app/)**. The marketing landing page lives at **[neshkoli.github.io/updown](https://neshkoli.github.io/updown)**.
 
 ```bash
 # Build for web (output: dist/)
@@ -169,7 +169,7 @@ Developed by [neshkoli](https://github.com/neshkoli)
 
 GitHub: [https://github.com/neshkoli/updown](https://github.com/neshkoli/updown)
 
-Web app: [updown.eshkoli.com](https://updown.eshkoli.com) · Landing page: [neshkoli.github.io/updown](https://neshkoli.github.io/updown/)
+Web app: [updown.eshkoli.com/app/](https://updown.eshkoli.com/app/) · Landing page: [neshkoli.github.io/updown](https://neshkoli.github.io/updown/)
 
 ## License
 
