@@ -11,6 +11,7 @@ import {
   onAction,
 } from '../editor-ui.js';
 import { setupLivePreview } from '../render.js';
+import { setupScrollSync } from '../scroll-sync.js';
 import { fileOpenPath } from '../file-ops.js';
 import { setupAutosave } from '../autosave.js';
 import {
@@ -79,6 +80,7 @@ export async function bootstrapApp(platform) {
 
   if (editor && preview) {
     refreshPreview = setupLivePreview(editor, preview);
+    setupScrollSync(editor, preview);
   }
 
   if (editor) {

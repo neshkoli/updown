@@ -288,6 +288,12 @@ html, body {
   display: none;
 }
 
+/* Frontmatter metadata is not part of the rendered Markdown preview. */
+.view-mode-preview .metadata-panel,
+.view-mode-split .metadata-panel {
+  display: none;
+}
+
 .metadata-header {
   position: sticky;
   top: 0;
